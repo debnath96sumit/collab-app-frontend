@@ -2,8 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import io from 'socket.io-client';
 import axios from 'axios';
 import { debounce } from 'lodash';
-
+import { useParams } from "react-router-dom";
 const CollaborativeEditor = () => {
+   const { id } = useParams();
   const [socket, setSocket] = useState(null);
   const [saveStatus, setSaveStatus] = useState('saved');
   const [isConnected, setIsConnected] = useState(false);
@@ -20,11 +21,11 @@ const CollaborativeEditor = () => {
 
     const fetchDocument = async () => {
       try {
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/documents/564d3ac5-07b6-42be-9c4f-ce9f2cc6e420`);
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/documents/${id}`);
         console.log(response.data);
         
         setDocument(response.data);
-         socket.emit('joinDocument', '564d3ac5-07b6-42be-9c4f-ce9f2cc6e420');
+        socket.emit('joinDocument', id);
       } catch (error) {
         console.error('Failed to fetch document:', error);
       }
@@ -208,7 +209,7 @@ const CollaborativeEditor = () => {
           }}></div>
           {isConnected ? 'Connected to server' : 'Connecting...'}
         </div>
-        <div>Last modified: {new Date().toLocaleString()}</div>
+        <div>Last modified: {document.updatedAt}</div>
       </div>
 
       {/* Editor */}
