@@ -4,9 +4,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 class ApiService {
   async getDocument(documentId) {
-    const response = await fetch(`${API_BASE_URL}/documents/${documentId}`);
-    if (!response.ok) throw new Error('Failed to fetch document');
-    return response.json();
+    return await axiosInstance.get(`${API_BASE_URL}/documents/${documentId}`);
   }
 
   async getAllDocuments() {
@@ -14,19 +12,15 @@ class ApiService {
   }
 
   async updateDocument(documentId, data) {
-    const response = await fetch(`${API_BASE_URL}/documents/${documentId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) throw new Error('Failed to update document');
-    return response.json();
+    return await axiosInstance.put(`${API_BASE_URL}/documents/${documentId}`, data);
   }
 
   async createDocument(data) {
     return await axiosInstance.post(`${API_BASE_URL}/documents`, data);
+  }
+
+  async deleteDocument(documentId){
+    return await axiosInstance.delete(`${API_BASE_URL}/documents/${documentId}`);
   }
 }
 

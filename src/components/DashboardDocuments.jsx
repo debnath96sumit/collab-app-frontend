@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import ApiService from "../services/api";
 import { useNavigate } from "react-router-dom";
+import { formatDate } from '../helpers';
 const DocumentDashboard = () => {
   const [documents, setDocuments] = useState([]);
 
@@ -49,7 +50,7 @@ const DocumentDashboard = () => {
 
     try {
       const data = await ApiService.createDocument({ title: newDocTitle, content: '' });
-      setDocuments([data, ...documents]);
+      setDocuments([data.data, ...documents]);
       setShowCreateModal(false);
       setNewDocTitle('');
     } catch (error) {
@@ -65,20 +66,11 @@ const DocumentDashboard = () => {
     }
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:3000/api/documents/${selectedDocument.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          title: editDocTitle
-        })
+      const response = await ApiService.updateDocument(selectedDocument.id, {
+        title: editDocTitle,
       });
-
-      if (response.ok) {
-        const updatedDoc = await response.json();
+      if (response.statusText === 'OK') {
+        const updatedDoc = response.data;
         setDocuments(documents.map(doc => 
           doc.id === updatedDoc.id ? updatedDoc : doc
         ));
@@ -94,15 +86,8 @@ const DocumentDashboard = () => {
 
   const handleDeleteDocument = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:3000/api/documents/${selectedDocument.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
+      const response = await ApiService.deleteDocument(selectedDocument.id);
+      if (response.data) {
         setDocuments(documents.filter(doc => doc.id !== selectedDocument.id));
         setShowDeleteModal(false);
         setSelectedDocument(null);
@@ -137,13 +122,6 @@ const DocumentDashboard = () => {
     doc.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  };
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb', fontFamily: 'system-ui, sans-serif' }}>

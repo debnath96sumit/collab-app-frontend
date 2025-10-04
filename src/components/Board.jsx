@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import io from 'socket.io-client';
-import axios from 'axios';
+import ApiService from '../services/api';
 import { debounce } from 'lodash';
 import { useParams } from "react-router-dom";
+import { formatDate } from '../helpers';
 const CollaborativeEditor = () => {
    const { id } = useParams();
   const [socket, setSocket] = useState(null);
@@ -11,8 +12,8 @@ const CollaborativeEditor = () => {
   const [showShareModal, setShowShareModal] = useState(false);
   const [document, setDocument] = useState({
     id: null,
-    title: null,
-    content: null,
+    title: '',
+    content: '',
   });
 
   useEffect(() => {
@@ -21,9 +22,7 @@ const CollaborativeEditor = () => {
 
     const fetchDocument = async () => {
       try {
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/documents/${id}`);
-        console.log(response.data);
-        
+        const response = await ApiService.getDocument(id);
         setDocument(response.data);
         socket.emit('joinDocument', id);
       } catch (error) {
@@ -209,7 +208,7 @@ const CollaborativeEditor = () => {
           }}></div>
           {isConnected ? 'Connected to server' : 'Connecting...'}
         </div>
-        <div>Last modified: {document.updatedAt}</div>
+        <div>Last modified: {formatDate(document.updatedAt)}</div>
       </div>
 
       {/* Editor */}

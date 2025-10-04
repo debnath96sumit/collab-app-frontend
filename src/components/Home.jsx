@@ -1,54 +1,10 @@
-import React, { useState } from 'react';
-import { login } from '../services/authApi';
 import { useNavigate } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 const Home = () => {
   const navigate = useNavigate();
-  const [currentPage, setCurrentPage] = useState('landing');
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    name: '',
-    confirmPassword: ''
-  });
-
-  const handleInputChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await login({
-        email: formData.email,
-        password: formData.password,
-      });
-
-      if (response.data?.access_token) {
-        localStorage.setItem("access_token", response.data.access_token);
-
-        navigate("/dashboard");
-      }
-    } catch (err) {
-      console.error(err);
-      alert(err.response?.data?.message || "Login failed. Please try again.");
-    }
-  };
-
-  const handleSignup = (e) => {
-    e.preventDefault();
-    if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match!');
-      return;
-    }
-    console.log('Signup:', formData);
-    alert('Connect to your NestJS backend at /api/auth/signup');
-  };
-
-  if (currentPage === 'landing') {
-    return (
+  return (
+    <>
       <div style={{ minHeight: '100vh', backgroundColor: '#fff', fontFamily: 'system-ui, sans-serif' }}>
         <nav style={{
           display: 'flex',
@@ -74,10 +30,10 @@ const Home = () => {
               CollabDocs
             </span>
           </div>
-          
+
           <div style={{ display: 'flex', gap: '16px' }}>
             <button
-              onClick={() => setCurrentPage('login')}
+              onClick={() => navigate('/login')}
               style={{
                 padding: '10px 24px',
                 backgroundColor: 'transparent',
@@ -92,7 +48,7 @@ const Home = () => {
               Log in
             </button>
             <button
-              onClick={() => setCurrentPage('signup')}
+              onClick={() => navigate('/register')}
               style={{
                 padding: '10px 24px',
                 backgroundColor: '#4f46e5',
@@ -126,7 +82,7 @@ const Home = () => {
             <br />
             <span style={{ color: '#4f46e5' }}>Work Seamlessly Together</span>
           </h1>
-          
+
           <p style={{
             fontSize: '20px',
             color: '#6b7280',
@@ -134,13 +90,13 @@ const Home = () => {
             maxWidth: '700px',
             margin: '0 auto 40px'
           }}>
-            Create, edit, and share documents with your team in real-time. 
+            Create, edit, and share documents with your team in real-time.
             Experience the future of collaborative writing.
           </p>
 
           <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
             <button
-              onClick={() => setCurrentPage('signup')}
+              onClick={() => navigate('/register')}
               style={{
                 padding: '16px 32px',
                 backgroundColor: '#4f46e5',
@@ -193,12 +149,12 @@ const Home = () => {
               </div>
               <div style={{ textAlign: 'left' }}>
                 {[80, 90, 75, 85].map((width, i) => (
-                  <div key={i} style={{ 
-                    height: '12px', 
-                    backgroundColor: '#e5e7eb', 
-                    borderRadius: '4px', 
-                    marginBottom: '12px', 
-                    width: `${width}%` 
+                  <div key={i} style={{
+                    height: '12px',
+                    backgroundColor: '#e5e7eb',
+                    borderRadius: '4px',
+                    marginBottom: '12px',
+                    width: `${width}%`
                   }}></div>
                 ))}
               </div>
@@ -328,7 +284,7 @@ const Home = () => {
                   ))}
                 </ul>
                 <button
-                  onClick={() => setCurrentPage('signup')}
+                  onClick={() => navigate('/register')}
                   style={{
                     width: '100%',
                     padding: '12px',
@@ -369,7 +325,7 @@ const Home = () => {
             Join thousands of teams already using CollabDocs
           </p>
           <button
-            onClick={() => setCurrentPage('signup')}
+            onClick={() => navigate('/register')}
             style={{
               padding: '16px 32px',
               backgroundColor: 'white',
@@ -391,369 +347,11 @@ const Home = () => {
           padding: '40px 48px',
           textAlign: 'center'
         }}>
-          <p style={{ opacity: 0.8 }}>© 2025 CollabDocs. All rights reserved.</p>
+          <p style={{ opacity: 0.8 }}>© {new Date().getFullYear()} CollabDocs. All rights reserved.</p>
         </footer>
       </div>
-    );
-  }
-
-  if (currentPage === 'login') {
-    return (
-      <div style={{
-        minHeight: '100vh',
-        backgroundColor: '#f9fafb',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '20px',
-        fontFamily: 'system-ui, sans-serif'
-      }}>
-        <div style={{
-          backgroundColor: 'white',
-          borderRadius: '16px',
-          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-          padding: '48px',
-          width: '100%',
-          maxWidth: '440px'
-        }}>
-          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-            <div style={{
-              width: '60px',
-              height: '60px',
-              backgroundColor: '#4f46e5',
-              borderRadius: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 16px',
-              fontSize: '32px'
-            }}>
-              📄
-            </div>
-            <h2 style={{
-              fontSize: '28px',
-              fontWeight: 'bold',
-              color: '#1f2937',
-              marginBottom: '8px'
-            }}>
-              Welcome back
-            </h2>
-            <p style={{ color: '#6b7280' }}>Log in to your account to continue</p>
-          </div>
-
-          <div onSubmit={handleLogin}>
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                fontWeight: '500',
-                color: '#374151'
-              }}>
-                Email
-              </label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                placeholder="you@example.com"
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '8px',
-                  fontSize: '16px',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
-              />
-            </div>
-
-            <div style={{ marginBottom: '24px' }}>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                fontWeight: '500',
-                color: '#374151'
-              }}>
-                Password
-              </label>
-              <input
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                placeholder="••••••••"
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '8px',
-                  fontSize: '16px',
-                  outline: 'none',
-                  boxSizing: 'border-box'
-                }}
-              />
-            </div>
-
-            <button
-              onClick={handleLogin}
-              style={{
-                width: '100%',
-                padding: '12px',
-                backgroundColor: '#4f46e5',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '16px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                marginBottom: '16px'
-              }}
-            >
-              Log in
-            </button>
-
-            <p style={{ textAlign: 'center', color: '#6b7280', fontSize: '14px' }}>
-              Don't have an account?{' '}
-              <span
-                onClick={() => setCurrentPage('signup')}
-                style={{ color: '#4f46e5', cursor: 'pointer', fontWeight: '500' }}
-              >
-                Sign up
-              </span>
-            </p>
-          </div>
-
-          <button
-            onClick={() => setCurrentPage('landing')}
-            style={{
-              width: '100%',
-              padding: '12px',
-              backgroundColor: 'transparent',
-              border: '1px solid #d1d5db',
-              borderRadius: '8px',
-              fontSize: '14px',
-              color: '#6b7280',
-              cursor: 'pointer',
-              marginTop: '16px'
-            }}
-          >
-            ← Back to home
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div style={{
-      minHeight: '100vh',
-      backgroundColor: '#f9fafb',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '20px',
-      fontFamily: 'system-ui, sans-serif'
-    }}>
-      <div style={{
-        backgroundColor: 'white',
-        borderRadius: '16px',
-        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-        padding: '48px',
-        width: '100%',
-        maxWidth: '440px'
-      }}>
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <div style={{
-            width: '60px',
-            height: '60px',
-            backgroundColor: '#4f46e5',
-            borderRadius: '12px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto 16px',
-            fontSize: '32px'
-          }}>
-            📄
-          </div>
-          <h2 style={{
-            fontSize: '28px',
-            fontWeight: 'bold',
-            color: '#1f2937',
-            marginBottom: '8px'
-          }}>
-            Create your account
-          </h2>
-          <p style={{ color: '#6b7280' }}>Start collaborating in minutes</p>
-        </div>
-
-        <div>
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{
-              display: 'block',
-              marginBottom: '8px',
-              fontWeight: '500',
-              color: '#374151'
-            }}>
-              Full Name
-            </label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleInputChange}
-              placeholder="John Doe"
-              style={{
-                width: '100%',
-                padding: '12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '8px',
-                fontSize: '16px',
-                outline: 'none',
-                boxSizing: 'border-box'
-              }}
-            />
-          </div>
-
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{
-              display: 'block',
-              marginBottom: '8px',
-              fontWeight: '500',
-              color: '#374151'
-            }}>
-              Email
-            </label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              placeholder="you@example.com"
-              style={{
-                width: '100%',
-                padding: '12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '8px',
-                fontSize: '16px',
-                outline: 'none',
-                boxSizing: 'border-box'
-              }}
-            />
-          </div>
-
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{
-              display: 'block',
-              marginBottom: '8px',
-              fontWeight: '500',
-              color: '#374151'
-            }}>
-              Password
-            </label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleInputChange}
-              placeholder="••••••••"
-              style={{
-                width: '100%',
-                padding: '12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '8px',
-                fontSize: '16px',
-                outline: 'none',
-                boxSizing: 'border-box'
-              }}
-            />
-          </div>
-
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{
-              display: 'block',
-              marginBottom: '8px',
-              fontWeight: '500',
-              color: '#374151'
-            }}>
-              Confirm Password
-            </label>
-            <input
-              type="password"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleInputChange}
-              placeholder="••••••••"
-              style={{
-                width: '100%',
-                padding: '12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '8px',
-                fontSize: '16px',
-                outline: 'none',
-                boxSizing: 'border-box'
-              }}
-            />
-          </div>
-
-          <button
-            onClick={handleSignup}
-            style={{
-              width: '100%',
-              padding: '12px',
-              backgroundColor: '#4f46e5',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '16px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              marginBottom: '16px'
-            }}
-          >
-            Create account
-          </button>
-
-          <p style={{
-            textAlign: 'center',
-            color: '#6b7280',
-            fontSize: '12px',
-            marginBottom: '16px'
-          }}>
-            By signing up, you agree to our Terms of Service and Privacy Policy
-          </p>
-
-          <p style={{ textAlign: 'center', color: '#6b7280', fontSize: '14px' }}>
-            Already have an account?{' '}
-            <span
-              onClick={() => setCurrentPage('login')}
-              style={{ color: '#4f46e5', cursor: 'pointer', fontWeight: '500' }}
-            >
-              Log in
-            </span>
-          </p>
-        </div>
-
-        <button
-          onClick={() => setCurrentPage('landing')}
-          style={{
-            width: '100%',
-            padding: '12px',
-            backgroundColor: 'transparent',
-            border: '1px solid #d1d5db',
-            borderRadius: '8px',
-            fontSize: '14px',
-            color: '#6b7280',
-            cursor: 'pointer',
-            marginTop: '16px'
-          }}
-        >
-          ← Back to home
-        </button>
-      </div>
-    </div>
+      <ToastContainer position="top-right" autoClose={3000} />
+    </>
   );
 };
 
