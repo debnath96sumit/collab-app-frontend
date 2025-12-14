@@ -8,7 +8,7 @@ class ApiService {
   }
 
   async getAllDocuments() {
-    return await axiosInstance.get(`${API_BASE_URL}/documents`);
+    return await axiosInstance.get(`${API_BASE_URL}/documents/get-my-docs`);
   }
 
   async updateDocument(documentId, data) {
@@ -16,11 +16,19 @@ class ApiService {
   }
 
   async createDocument(data) {
-    return await axiosInstance.post(`${API_BASE_URL}/documents`, data);
+    return await axiosInstance.post(`${API_BASE_URL}/documents/create`, data);
   }
 
-  async deleteDocument(documentId){
+  async deleteDocument(documentId) {
     return await axiosInstance.delete(`${API_BASE_URL}/documents/${documentId}`);
+  }
+
+  async addCollaborator(documentId, email) {
+    return await axiosInstance.post(`${API_BASE_URL}/documents/${documentId}/share`, { email });
+  }
+
+  async removeCollaborator(documentId, userId) {
+    return await axiosInstance.delete(`${API_BASE_URL}/documents/${documentId}/share/${userId}`);
   }
 }
 

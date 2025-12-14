@@ -2,7 +2,10 @@ import React, { useState } from 'react';
 import { register } from '../services/authApi';
 import { useNavigate } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
+import { registerSchema } from "../lib/validations/auth";
 import "react-toastify/dist/ReactToastify.css";
+import { toast } from "react-toastify";
+
 const Register = () => {
   const navigate = useNavigate();
 
@@ -12,33 +15,65 @@ const Register = () => {
     password: "",
     confirmPassword: ""
   });
+  const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleRegisterInputChange = (e) => {
-    setRegisterData({
-      ...registerData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    setRegisterData((prev) => ({ ...prev, [name]: value }));
+    // Clear error for the field being edited
+    if (errors[name]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
   };
 
   const handleSignup = async (e) => {
     e.preventDefault();
-    if (registerData.password !== registerData.confirmPassword) {
-      alert('Passwords do not match!');
+    setIsLoading(true);
+    setErrors({});
+
+    const result = registerSchema.safeParse(registerData);
+
+    if (!result.success) {
+      const fieldErrors = {};
+      const errorList = result.error?.errors || result.error?.issues || [];
+
+      if (Array.isArray(errorList)) {
+        errorList.forEach((err) => {
+          fieldErrors[err.path[0]] = err.message;
+        });
+      } else {
+        console.error("Unexpected error structure:", result.error);
+      }
+
+      setErrors(fieldErrors);
+      setIsLoading(false);
       return;
     }
+
     try {
-      const response = await register({
+      await register({
         username: registerData.username,
         email: registerData.email,
         password: registerData.password
       });
-      console.log("rrrrrrrrr", response);
 
-      navigate("/login");
+      toast.success("Account created successfully! Redirecting to login...");
+      setTimeout(() => {
+        navigate("/login");
+      }, 1500);
     } catch (err) {
       console.error(err);
+      toast.error(err.response?.data?.message || "Registration failed. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
+
   return (
     <>
       <div style={{
@@ -102,13 +137,16 @@ const Register = () => {
                 style={{
                   width: '100%',
                   padding: '12px',
-                  border: '1px solid #d1d5db',
+                  border: `1px solid ${errors.username ? '#ef4444' : '#d1d5db'}`,
                   borderRadius: '8px',
                   fontSize: '16px',
                   outline: 'none',
                   boxSizing: 'border-box'
                 }}
               />
+              {errors.username && (
+                <p style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>{errors.username}</p>
+              )}
             </div>
 
             <div style={{ marginBottom: '20px' }}>
@@ -129,13 +167,16 @@ const Register = () => {
                 style={{
                   width: '100%',
                   padding: '12px',
-                  border: '1px solid #d1d5db',
+                  border: `1px solid ${errors.email ? '#ef4444' : '#d1d5db'}`,
                   borderRadius: '8px',
                   fontSize: '16px',
                   outline: 'none',
                   boxSizing: 'border-box'
                 }}
               />
+              {errors.email && (
+                <p style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>{errors.email}</p>
+              )}
             </div>
 
             <div style={{ marginBottom: '20px' }}>
@@ -156,13 +197,16 @@ const Register = () => {
                 style={{
                   width: '100%',
                   padding: '12px',
-                  border: '1px solid #d1d5db',
+                  border: `1px solid ${errors.password ? '#ef4444' : '#d1d5db'}`,
                   borderRadius: '8px',
                   fontSize: '16px',
                   outline: 'none',
                   boxSizing: 'border-box'
                 }}
               />
+              {errors.password && (
+                <p style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>{errors.password}</p>
+              )}
             </div>
 
             <div style={{ marginBottom: '24px' }}>
@@ -183,31 +227,36 @@ const Register = () => {
                 style={{
                   width: '100%',
                   padding: '12px',
-                  border: '1px solid #d1d5db',
+                  border: `1px solid ${errors.confirmPassword ? '#ef4444' : '#d1d5db'}`,
                   borderRadius: '8px',
                   fontSize: '16px',
                   outline: 'none',
                   boxSizing: 'border-box'
                 }}
               />
+              {errors.confirmPassword && (
+                <p style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>{errors.confirmPassword}</p>
+              )}
             </div>
 
             <button
               onClick={handleSignup}
+              disabled={isLoading}
               style={{
                 width: '100%',
                 padding: '12px',
-                backgroundColor: '#4f46e5',
+                backgroundColor: isLoading ? '#818cf8' : '#4f46e5',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
                 fontSize: '16px',
                 fontWeight: '600',
-                cursor: 'pointer',
-                marginBottom: '16px'
+                cursor: isLoading ? 'not-allowed' : 'pointer',
+                marginBottom: '16px',
+                opacity: isLoading ? 0.7 : 1
               }}
             >
-              Create account
+              {isLoading ? "Creating account..." : "Create account"}
             </button>
 
             <p style={{

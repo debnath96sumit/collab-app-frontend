@@ -3,41 +3,57 @@ import io from 'socket.io-client';
 import ApiService from '../services/api';
 import { debounce } from 'lodash';
 import { useParams } from "react-router-dom";
-import { formatDate } from '../helpers';
+import { formatDate, getUserFromToken } from '../helpers';
+
 const CollaborativeEditor = () => {
-   const { id } = useParams();
+  const { id } = useParams();
   const [socket, setSocket] = useState(null);
   const [saveStatus, setSaveStatus] = useState('saved');
   const [isConnected, setIsConnected] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
   const [document, setDocument] = useState({
     id: null,
     title: '',
     content: '',
+    collaborators: []
   });
 
   useEffect(() => {
+    const user = getUserFromToken();
+    setCurrentUser(user);
+
     const socket = io(import.meta.env.VITE_API_URL);
     setSocket(socket);
 
     const fetchDocument = async () => {
       try {
         const response = await ApiService.getDocument(id);
-        setDocument(response.data);
+        setDocument(response.data.data);
         socket.emit('joinDocument', id);
       } catch (error) {
         console.error('Failed to fetch document:', error);
       }
     };
     fetchDocument();
-  }, []);
 
-  // Connected users (mock data)
-  const users = [
-    { id: 1, name: 'You', color: '#3b82f6' },
-    { id: 2, name: 'Alice', color: '#ef4444' },
-    { id: 3, name: 'Bob', color: '#10b981' }
-  ];
+    return () => {
+      socket.disconnect();
+    };
+  }, [id]);
+
+  const COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
+
+  const getUserColor = (userId) => {
+    const id = typeof userId === 'string' ? userId.charCodeAt(0) : userId;
+    return COLORS[id % COLORS.length];
+  };
+
+  const collaborators = document.collaborators ? document.collaborators.map(c => ({
+    id: c.user.id,
+    name: currentUser && c.user.id === currentUser.id ? 'You' : c.user.username,
+    color: getUserColor(c.user.id)
+  })) : [];
 
   useEffect(() => {
     if (!socket) return;
@@ -48,8 +64,12 @@ const CollaborativeEditor = () => {
 
     socket.on('documentUpdated', (content) => {
       setDocument(prev => ({ ...prev, content }));
-
     });
+
+    socket.on('disconnect', () => {
+      setIsConnected(false);
+    });
+
   }, [socket]);
 
 
@@ -57,10 +77,10 @@ const CollaborativeEditor = () => {
     debounce((docId, content) => {
       socket.emit('editDocument', { docId, content });
       setSaveStatus('saved');
-    }, 1000), 
-    [socket] 
+    }, 1000),
+    [socket]
   );
-  
+
   const handleContentChange = (e) => {
     const newContent = e.target.value;
 
@@ -69,7 +89,7 @@ const CollaborativeEditor = () => {
 
     debouncedEmit(document.id, newContent);
   };
-  
+
   // Handle title changes
   const handleTitleChange = (e) => {
     setDocument(prev => ({ ...prev, title: e.target.value || 'Untitled Document' }));
@@ -86,8 +106,8 @@ const CollaborativeEditor = () => {
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5', fontFamily: 'Arial, sans-serif' }}>
       {/* Header */}
-      <div style={{ 
-        backgroundColor: 'white', 
+      <div style={{
+        backgroundColor: 'white',
         borderBottom: '1px solid #e0e0e0',
         padding: '12px 24px',
         display: 'flex',
@@ -95,9 +115,9 @@ const CollaborativeEditor = () => {
         alignItems: 'center'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ 
-            width: '32px', 
-            height: '32px', 
+          <div style={{
+            width: '32px',
+            height: '32px',
             backgroundColor: '#4285f4',
             borderRadius: '6px',
             display: 'flex',
@@ -108,7 +128,7 @@ const CollaborativeEditor = () => {
           }}>
             📄
           </div>
-          
+
           <input
             type="text"
             value={document.title}
@@ -129,9 +149,9 @@ const CollaborativeEditor = () => {
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           {/* Save Status */}
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
             gap: '8px',
             color: saveStatus === 'saving' ? '#fbbc04' : saveStatus === 'saved' ? '#34a853' : '#ea4335',
             fontSize: '14px'
@@ -145,9 +165,9 @@ const CollaborativeEditor = () => {
             {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? 'All changes saved' : 'Error saving'}
           </div>
 
-          {/* Users */}
+          {/* Collaborators */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {users.map((user) => (
+            {collaborators.map((user) => (
               <div
                 key={user.id}
                 style={{
@@ -162,7 +182,7 @@ const CollaborativeEditor = () => {
                   fontSize: '12px',
                   fontWeight: 'bold',
                   border: '2px solid white',
-                  marginLeft: user.id > 1 ? '-8px' : '0'
+                  marginLeft: '0'
                 }}
                 title={user.name}
               >
@@ -191,7 +211,7 @@ const CollaborativeEditor = () => {
       </div>
 
       {/* Connection Status */}
-      <div style={{ 
+      <div style={{
         backgroundColor: '#e8f0fe',
         padding: '8px 24px',
         display: 'flex',
@@ -213,14 +233,14 @@ const CollaborativeEditor = () => {
 
       {/* Editor */}
       <div style={{ maxWidth: '800px', margin: '24px auto', padding: '0 24px' }}>
-        <div style={{ 
+        <div style={{
           backgroundColor: 'white',
           borderRadius: '8px',
           boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
           overflow: 'hidden'
         }}>
           {/* Toolbar */}
-          <div style={{ 
+          <div style={{
             backgroundColor: '#f8f9fa',
             borderBottom: '1px solid #e0e0e0',
             padding: '12px 16px',
@@ -290,7 +310,7 @@ const CollaborativeEditor = () => {
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h3 style={{ fontSize: '20px', fontWeight: '500', margin: 0 }}>Share Document</h3>
-              <button 
+              <button
                 onClick={() => setShowShareModal(false)}
                 style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer' }}
               >

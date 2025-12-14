@@ -5,38 +5,37 @@ import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
 
 const Login = () => {
-    const navigate = useNavigate();
-    const [loginData, setLoginData] = useState({
-      email: "",
-      password: ""
+  const navigate = useNavigate();
+  const [loginData, setLoginData] = useState({
+    email: "",
+    password: ""
+  });
+
+  const handleLoginInputChange = (e) => {
+    setLoginData({
+      ...loginData,
+      [e.target.name]: e.target.value
     });
-  
-    const handleLoginInputChange = (e) => {
-      setLoginData({
-        ...loginData,
-        [e.target.name]: e.target.value
+  };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await login({
+        email: loginData.email,
+        password: loginData.password,
       });
-    };
-  
-    const handleLogin = async (e) => {
-      e.preventDefault();
-      try {
-        const response = await login({
-          email: loginData.email,
-          password: loginData.password,
-        });
-  
-        if (response.data?.access_token) {
-          localStorage.setItem("access_token", response.data.access_token);
-  
-          navigate("/dashboard");
-        }else{
-          navigate("/");
-        }
-      } catch (err) {
-        console.error(err);
+      if (response.data?.data?.access_token) {
+        localStorage.setItem("access_token", response.data.data.access_token);
+
+        navigate("/dashboard");
+      } else {
+        navigate("/");
       }
-    };
+    } catch (err) {
+      console.error(err);
+    }
+  };
   return (
     <>
       <div style={{
@@ -157,7 +156,7 @@ const Login = () => {
             <p style={{ textAlign: 'center', color: '#6b7280', fontSize: '14px' }}>
               Don't have an account?{' '}
               <span
-                // onClick={() => setCurrentPage('signup')}
+                onClick={() => navigate('/register')}
                 style={{ color: '#4f46e5', cursor: 'pointer', fontWeight: '500' }}
               >
                 Sign up
@@ -166,7 +165,7 @@ const Login = () => {
           </div>
 
           <button
-            // onClick={() => setCurrentPage('landing')}
+            onClick={() => navigate('/')}
             style={{
               width: '100%',
               padding: '12px',
@@ -184,7 +183,7 @@ const Login = () => {
         </div>
       </div>
       <ToastContainer position="top-right" autoClose={3000} />
-      </>
+    </>
   )
 }
 

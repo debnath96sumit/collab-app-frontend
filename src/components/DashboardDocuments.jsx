@@ -1,17 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  FileText, 
-  Plus, 
-  Search, 
-  MoreVertical, 
-  Edit, 
-  Trash2, 
+import { useState, useEffect } from 'react';
+import {
+  FileText,
+  Plus,
+  Search,
+  MoreVertical,
+  Edit,
+  Trash2,
   LogOut,
   User,
   Calendar,
   Clock,
   X,
-  Check
 } from 'lucide-react';
 import ApiService from "../services/api";
 import { useNavigate } from "react-router-dom";
@@ -35,8 +34,8 @@ const DocumentDashboard = () => {
 
   const loadDocuments = async () => {
     try {
-      const data = await ApiService.getAllDocuments();
-      setDocuments(data.data);
+      const response = await ApiService.getAllDocuments();
+      setDocuments(response.data?.data);
     } catch (error) {
       console.error('Error loading documents:', error);
       setDocuments([]);
@@ -49,8 +48,8 @@ const DocumentDashboard = () => {
     }
 
     try {
-      const data = await ApiService.createDocument({ title: newDocTitle, content: '' });
-      setDocuments([data.data, ...documents]);
+      const response = await ApiService.createDocument({ title: newDocTitle, content: '' });
+      setDocuments([response.data.data, ...documents]);
       setShowCreateModal(false);
       setNewDocTitle('');
     } catch (error) {
@@ -70,8 +69,8 @@ const DocumentDashboard = () => {
         title: editDocTitle,
       });
       if (response.statusText === 'OK') {
-        const updatedDoc = response.data;
-        setDocuments(documents.map(doc => 
+        const updatedDoc = response.data.data;
+        setDocuments(documents.map(doc =>
           doc.id === updatedDoc.id ? updatedDoc : doc
         ));
         setShowEditModal(false);
