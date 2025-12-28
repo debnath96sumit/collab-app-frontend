@@ -15,8 +15,13 @@ import {
 import ApiService from "../services/api";
 import { useNavigate } from "react-router-dom";
 import { formatDate } from '../helpers';
+import { useAuth } from "../contexts/AuthContext";
+import { toast } from 'react-toastify';
+
 const DocumentDashboard = () => {
-  const [documents, setDocuments] = useState([]);
+  const { logout } = useAuth();
+  const [myDocuments, setMyDocuments] = useState([]);
+  const [sharedDocuments, setSharedDocuments] = useState([]);
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -27,6 +32,7 @@ const DocumentDashboard = () => {
   const [editDocTitle, setEditDocTitle] = useState('');
   const [showUserMenu, setShowUserMenu] = useState(false);
   const navigate = useNavigate();
+
   // Load documents from API
   useEffect(() => {
     loadDocuments();
@@ -35,12 +41,16 @@ const DocumentDashboard = () => {
   const loadDocuments = async () => {
     try {
       const response = await ApiService.getAllDocuments();
-      setDocuments(response.data?.data);
+      const { myDocs, sharedWithMe } = response.data.data;
+      setMyDocuments(myDocs || []);
+      setSharedDocuments(sharedWithMe || []);
     } catch (error) {
       console.error('Error loading documents:', error);
-      setDocuments([]);
+      setMyDocuments([]);
+      setSharedDocuments([]);
     }
   };
+
   const handleCreateDocument = async () => {
     if (!newDocTitle.trim()) {
       alert('Please enter a document title');
@@ -49,7 +59,7 @@ const DocumentDashboard = () => {
 
     try {
       const response = await ApiService.createDocument({ title: newDocTitle, content: '' });
-      setDocuments([response.data.data, ...documents]);
+      setMyDocuments([response.data.data, ...myDocuments]);
       setShowCreateModal(false);
       setNewDocTitle('');
     } catch (error) {
@@ -70,7 +80,10 @@ const DocumentDashboard = () => {
       });
       if (response.statusText === 'OK') {
         const updatedDoc = response.data.data;
-        setDocuments(documents.map(doc =>
+        setMyDocuments(myDocuments.map(doc =>
+          doc.id === updatedDoc.id ? updatedDoc : doc
+        ));
+        setSharedDocuments(sharedDocuments.map(doc =>
           doc.id === updatedDoc.id ? updatedDoc : doc
         ));
         setShowEditModal(false);
@@ -87,7 +100,8 @@ const DocumentDashboard = () => {
     try {
       const response = await ApiService.deleteDocument(selectedDocument.id);
       if (response.data) {
-        setDocuments(documents.filter(doc => doc.id !== selectedDocument.id));
+        setMyDocuments(myDocuments.filter(doc => doc.id !== selectedDocument.id));
+        setSharedDocuments(sharedDocuments.filter(doc => doc.id !== selectedDocument.id));
         setShowDeleteModal(false);
         setSelectedDocument(null);
       }
@@ -97,9 +111,13 @@ const DocumentDashboard = () => {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('access_token');
-    window.location.href = '/';
+  const handleLogout = async () => {
+    await logout();
+    toast.success('Logged out successfully! Redirecting to home page...');
+
+    setTimeout(() => {
+      navigate('/');
+    }, 1500);
   };
 
   const openEditModal = (doc) => {
@@ -117,10 +135,13 @@ const DocumentDashboard = () => {
     navigate(`/board/${doc.id}`);
   };
 
-  const filteredDocuments = documents.filter(doc =>
+  const filteredMyDocuments = myDocuments.filter(doc =>
     doc.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const filteredSharedDocuments = sharedDocuments.filter(doc =>
+    doc.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb', fontFamily: 'system-ui, sans-serif' }}>
@@ -229,7 +250,7 @@ const DocumentDashboard = () => {
               My Documents
             </h1>
             <p style={{ color: '#6b7280', fontSize: '16px' }}>
-              {documents.length} {documents.length === 1 ? 'document' : 'documents'}
+              {myDocuments.length + sharedDocuments.length} {(myDocuments.length + sharedDocuments.length) === 1 ? 'document' : 'documents'}
             </p>
           </div>
 
@@ -287,7 +308,7 @@ const DocumentDashboard = () => {
         </div>
 
         {/* Documents Grid */}
-        {filteredDocuments.length === 0 ? (
+        {filteredMyDocuments.length === 0 && filteredSharedDocuments.length === 0 ? (
           <div style={{
             textAlign: 'center',
             padding: '80px 20px',
@@ -331,165 +352,62 @@ const DocumentDashboard = () => {
             )}
           </div>
         ) : (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-            gap: '24px'
-          }}>
-            {filteredDocuments.map((doc) => (
-              <div
-                key={doc.id}
-                style={{
-                  backgroundColor: 'white',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '12px',
-                  padding: '24px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  position: 'relative'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.boxShadow = 'none';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }}
-              >
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
+            {/* My Documents Section */}
+            {filteredMyDocuments.length > 0 && (
+              <div>
+                <h2 style={{
+                  fontSize: '20px',
+                  fontWeight: '600',
+                  color: '#374151',
                   marginBottom: '16px'
+                }}>My Documents</h2>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                  gap: '24px'
                 }}>
-                  <div
-                    onClick={() => openDocument(doc)}
-                    style={{ flex: 1 }}
-                  >
-                    <div style={{
-                      width: '40px',
-                      height: '40px',
-                      backgroundColor: '#eff6ff',
-                      borderRadius: '8px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      marginBottom: '12px'
-                    }}>
-                      <FileText style={{ width: '24px', height: '24px', color: '#3b82f6' }} />
-                    </div>
-                    <h3 style={{
-                      fontSize: '18px',
-                      fontWeight: '600',
-                      color: '#1f2937',
-                      marginBottom: '8px',
-                      wordBreak: 'break-word'
-                    }}>
-                      {doc.title}
-                    </h3>
-                  </div>
-
-                  <div style={{ position: 'relative' }}>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const menu = e.currentTarget.nextSibling;
-                        menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
-                      }}
-                      style={{
-                        padding: '4px',
-                        backgroundColor: 'transparent',
-                        border: 'none',
-                        cursor: 'pointer',
-                        borderRadius: '4px'
-                      }}
-                    >
-                      <MoreVertical style={{ width: '20px', height: '20px', color: '#6b7280' }} />
-                    </button>
-
-                    <div
-                      style={{
-                        display: 'none',
-                        position: 'absolute',
-                        right: 0,
-                        top: '30px',
-                        backgroundColor: 'white',
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '8px',
-                        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                        minWidth: '150px',
-                        zIndex: 10
-                      }}
-                    >
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openEditModal(doc);
-                        }}
-                        style={{
-                          width: '100%',
-                          padding: '10px 16px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          border: 'none',
-                          background: 'none',
-                          cursor: 'pointer',
-                          fontSize: '14px',
-                          color: '#374151',
-                          textAlign: 'left'
-                        }}
-                      >
-                        <Edit style={{ width: '16px', height: '16px' }} />
-                        Rename
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openDeleteModal(doc);
-                        }}
-                        style={{
-                          width: '100%',
-                          padding: '10px 16px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          border: 'none',
-                          background: 'none',
-                          cursor: 'pointer',
-                          fontSize: '14px',
-                          color: '#ef4444',
-                          textAlign: 'left'
-                        }}
-                      >
-                        <Trash2 style={{ width: '16px', height: '16px' }} />
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div
-                  onClick={() => openDocument(doc)}
-                  style={{
-                    display: 'flex',
-                    gap: '16px',
-                    fontSize: '14px',
-                    color: '#6b7280'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Calendar style={{ width: '14px', height: '14px' }} />
-                    {formatDate(doc.createdAt)}
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Clock style={{ width: '14px', height: '14px' }} />
-                    {formatDate(doc.updatedAt)}
-                  </div>
+                  {filteredMyDocuments.map((doc) => (
+                    <DocumentCard
+                      key={doc.id}
+                      doc={doc}
+                      openDocument={openDocument}
+                      openEditModal={openEditModal}
+                      openDeleteModal={openDeleteModal}
+                      formatDate={formatDate}
+                    />
+                  ))}
                 </div>
               </div>
-            ))}
+            )}
+
+            {/* Shared With Me Section */}
+            {filteredSharedDocuments.length > 0 && (
+              <div>
+                <h2 style={{
+                  fontSize: '20px',
+                  fontWeight: '600',
+                  color: '#374151',
+                  marginBottom: '16px'
+                }}>Shared with Me</h2>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                  gap: '24px'
+                }}>
+                  {filteredSharedDocuments.map((doc) => (
+                    <DocumentCard
+                      key={doc.id}
+                      doc={doc}
+                      openDocument={openDocument}
+                      openEditModal={openEditModal}
+                      openDeleteModal={openDeleteModal}
+                      formatDate={formatDate}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -838,3 +756,157 @@ const DocumentDashboard = () => {
 };
 
 export default DocumentDashboard;
+
+const DocumentCard = ({ doc, openDocument, openEditModal, openDeleteModal, formatDate }) => (
+  <div
+    style={{
+      backgroundColor: 'white',
+      border: '1px solid #e5e7eb',
+      borderRadius: '12px',
+      padding: '24px',
+      cursor: 'pointer',
+      transition: 'all 0.2s',
+      position: 'relative'
+    }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+      e.currentTarget.style.transform = 'translateY(-2px)';
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.boxShadow = 'none';
+      e.currentTarget.style.transform = 'translateY(0)';
+    }}
+  >
+    <div style={{
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginBottom: '16px'
+    }}>
+      <div
+        onClick={() => openDocument(doc)}
+        style={{ flex: 1 }}
+      >
+        <div style={{
+          width: '40px',
+          height: '40px',
+          backgroundColor: '#eff6ff',
+          borderRadius: '8px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: '12px'
+        }}>
+          <FileText style={{ width: '24px', height: '24px', color: '#3b82f6' }} />
+        </div>
+        <h3 style={{
+          fontSize: '18px',
+          fontWeight: '600',
+          color: '#1f2937',
+          marginBottom: '8px',
+          wordBreak: 'break-word'
+        }}>
+          {doc.title}
+        </h3>
+      </div>
+
+      <div style={{ position: 'relative' }}>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            const menu = e.currentTarget.nextSibling;
+            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+          }}
+          style={{
+            padding: '4px',
+            backgroundColor: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            borderRadius: '4px'
+          }}
+        >
+          <MoreVertical style={{ width: '20px', height: '20px', color: '#6b7280' }} />
+        </button>
+
+        <div
+          style={{
+            display: 'none',
+            position: 'absolute',
+            right: 0,
+            top: '30px',
+            backgroundColor: 'white',
+            border: '1px solid #e5e7eb',
+            borderRadius: '8px',
+            boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+            minWidth: '150px',
+            zIndex: 10
+          }}
+        >
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              openEditModal(doc);
+            }}
+            style={{
+              width: '100%',
+              padding: '10px 16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              border: 'none',
+              background: 'none',
+              cursor: 'pointer',
+              fontSize: '14px',
+              color: '#374151',
+              textAlign: 'left'
+            }}
+          >
+            <Edit style={{ width: '16px', height: '16px' }} />
+            Rename
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              openDeleteModal(doc);
+            }}
+            style={{
+              width: '100%',
+              padding: '10px 16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              border: 'none',
+              background: 'none',
+              cursor: 'pointer',
+              fontSize: '14px',
+              color: '#ef4444',
+              textAlign: 'left'
+            }}
+          >
+            <Trash2 style={{ width: '16px', height: '16px' }} />
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div
+      onClick={() => openDocument(doc)}
+      style={{
+        display: 'flex',
+        gap: '16px',
+        fontSize: '14px',
+        color: '#6b7280'
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <Calendar style={{ width: '14px', height: '14px' }} />
+        {formatDate(doc.createdAt)}
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <Clock style={{ width: '14px', height: '14px' }} />
+        {formatDate(doc.updatedAt)}
+      </div>
+    </div>
+  </div>
+);

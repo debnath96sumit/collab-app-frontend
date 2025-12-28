@@ -3,6 +3,10 @@ import axiosInstance from "./axiosInstance";
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 class ApiService {
+  async register(userData) {
+    return await axiosInstance.post(`${API_BASE_URL}/api/auth/register`, userData);
+  }
+
   async getDocument(documentId) {
     return await axiosInstance.get(`${API_BASE_URL}/documents/${documentId}`);
   }

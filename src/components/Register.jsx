@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { register } from '../services/authApi';
 import { useNavigate } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import { registerSchema } from "../lib/validations/auth";
 import "react-toastify/dist/ReactToastify.css";
 import { toast } from "react-toastify";
+import ApiService from '../services/api';
+import { Eye, EyeOff } from 'lucide-react';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -17,7 +18,8 @@ const Register = () => {
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
-
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const handleRegisterInputChange = (e) => {
     const { name, value } = e.target;
     setRegisterData((prev) => ({ ...prev, [name]: value }));
@@ -56,7 +58,7 @@ const Register = () => {
     }
 
     try {
-      await register({
+      await ApiService.register({
         username: registerData.username,
         email: registerData.email,
         password: registerData.password
@@ -179,63 +181,108 @@ const Register = () => {
               )}
             </div>
 
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                fontWeight: '500',
-                color: '#374151'
-              }}>
+            <div style={{ marginBottom: "20px", position: "relative" }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: "8px",
+                  fontWeight: "500",
+                  color: "#374151",
+                }}
+              >
                 Password
               </label>
+
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 name="password"
                 value={registerData.password}
                 onChange={handleRegisterInputChange}
                 placeholder="••••••••"
                 style={{
-                  width: '100%',
-                  padding: '12px',
-                  border: `1px solid ${errors.password ? '#ef4444' : '#d1d5db'}`,
-                  borderRadius: '8px',
-                  fontSize: '16px',
-                  outline: 'none',
-                  boxSizing: 'border-box'
+                  width: "100%",
+                  padding: "12px 42px 12px 12px",
+                  border: `1px solid ${errors.password ? "#ef4444" : "#d1d5db"}`,
+                  borderRadius: "8px",
+                  fontSize: "16px",
+                  outline: "none",
+                  boxSizing: "border-box",
                 }}
               />
+
+              <button
+                type="button"
+                onClick={() => setShowPassword((p) => !p)}
+                style={{
+                  position: "absolute",
+                  right: "10px",
+                  top: "38px",
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "#4f46e5",
+                }}
+              >
+                {showPassword ? <EyeOff /> : <Eye />}
+              </button>
+
               {errors.password && (
-                <p style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>{errors.password}</p>
+                <p style={{ color: "#ef4444", fontSize: "12px", marginTop: "4px" }}>
+                  {errors.password}
+                </p>
               )}
             </div>
 
-            <div style={{ marginBottom: '24px' }}>
-              <label style={{
-                display: 'block',
-                marginBottom: '8px',
-                fontWeight: '500',
-                color: '#374151'
-              }}>
+            <div style={{ marginBottom: "24px", position: "relative" }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: "8px",
+                  fontWeight: "500",
+                  color: "#374151",
+                }}
+              >
                 Confirm Password
               </label>
+
               <input
-                type="password"
+                type={showConfirmPassword ? "text" : "password"}
                 name="confirmPassword"
                 value={registerData.confirmPassword}
                 onChange={handleRegisterInputChange}
                 placeholder="••••••••"
                 style={{
-                  width: '100%',
-                  padding: '12px',
-                  border: `1px solid ${errors.confirmPassword ? '#ef4444' : '#d1d5db'}`,
-                  borderRadius: '8px',
-                  fontSize: '16px',
-                  outline: 'none',
-                  boxSizing: 'border-box'
+                  width: "100%",
+                  padding: "12px 42px 12px 12px",
+                  border: `1px solid ${errors.confirmPassword ? "#ef4444" : "#d1d5db"
+                    }`,
+                  borderRadius: "8px",
+                  fontSize: "16px",
+                  outline: "none",
+                  boxSizing: "border-box",
                 }}
               />
+
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword((p) => !p)}
+                style={{
+                  position: "absolute",
+                  right: "10px",
+                  top: "38px",
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "#4f46e5",
+                }}
+              >
+                {showConfirmPassword ? <EyeOff /> : <Eye />}
+              </button>
+
               {errors.confirmPassword && (
-                <p style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>{errors.confirmPassword}</p>
+                <p style={{ color: "#ef4444", fontSize: "12px", marginTop: "4px" }}>
+                  {errors.confirmPassword}
+                </p>
               )}
             </div>
 

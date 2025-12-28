@@ -7,7 +7,7 @@ import DocumentDashboard from './components/DashboardDocuments.jsx'
 import Login from './components/Login.jsx'
 import Register from './components/Register.jsx'
 function App() {
-  const token = localStorage.getItem("access_token");
+  const token = localStorage.getItem("accessToken");
   return (
     <Router>
       <Routes>

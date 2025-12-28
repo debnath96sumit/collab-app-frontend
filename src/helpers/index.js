@@ -10,7 +10,7 @@ export const formatDate = (date) => {
 };
 
 export const getUserFromToken = () => {
-    const token = localStorage.getItem('access_token');
+    const token = localStorage.getItem('accessToken');
     if (!token) return null;
 
     try {
