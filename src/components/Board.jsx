@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import io from 'socket.io-client';
-import ApiService from '../services/api';
+import { DocumentAPI } from '../utils/api';
 import { debounce } from 'lodash';
 import { useParams } from "react-router-dom";
 import { formatDate, getUserFromToken } from '../helpers';
@@ -28,8 +28,8 @@ const CollaborativeEditor = () => {
 
     const fetchDocument = async () => {
       try {
-        const response = await ApiService.getDocument(id);
-        setDocument(response.data.data);
+        const response = await DocumentAPI.getDocument(id);
+        setDocument(response.data);
         socket.emit('joinDocument', id);
       } catch (error) {
         console.error('Failed to fetch document:', error);

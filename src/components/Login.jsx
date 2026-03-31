@@ -1,21 +1,21 @@
-import React, { useState } from 'react';
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
-import { toast } from "react-toastify";
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from '../context/AuthContext';
 import { Eye, EyeOff } from 'lucide-react';
 const Login = () => {
-  const { login } = useAuth();
   const navigate = useNavigate();
   const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const { login } = useAuth();
+  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    document.title = 'Sign In - Collab App';
+  }, []);
   const [loginData, setLoginData] = useState({
     email: "",
-    password: "",
-    rememberMe: false
+    password: ""
   });
 
-  const [showPassword, setShowPassword] = useState(false);
   const handleLoginInputChange = (e) => {
     setLoginData({
       ...loginData,
@@ -25,15 +25,22 @@ const Login = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
-      await login(loginData.email, loginData.password, rememberMe);
-      toast.success("Login successful! Redirecting to dashboard...");
-      setTimeout(() => {
+      const response = await login({
+        email: loginData.email,
+        password: loginData.password,
+      });
+
+      if (response.success) {
         navigate("/dashboard");
-      }, 1500);
+      } else {
+        navigate("/");
+      }
     } catch (err) {
       console.error(err);
-      toast.error(err.message);
+    } finally {
+      setLoading(false);
     }
   };
   return (
@@ -182,7 +189,8 @@ const Login = () => {
             </div>
 
             <button
-              type="submit"
+              onClick={handleLogin}
+              disabled={loading}
               style={{
                 width: "100%",
                 padding: "12px",
@@ -196,32 +204,22 @@ const Login = () => {
                 marginBottom: "16px",
               }}
             >
-              Log in
+              {loading ? 'Logging in...' : 'Log in'}
             </button>
 
-            <p
-              style={{
-                textAlign: "center",
-                color: "#6b7280",
-                fontSize: "14px",
-              }}
-            >
-              Don't have an account?{" "}
-              <span
-                onClick={() => navigate("/register")}
-                style={{
-                  color: "#4f46e5",
-                  cursor: "pointer",
-                  fontWeight: "500",
-                }}
+            <p style={{ textAlign: 'center', color: '#6b7280', fontSize: '14px' }}>
+              Don't have an account?{' '}
+              <Link
+                to="/register"
+                style={{ color: '#4f46e5', cursor: 'pointer', fontWeight: '500' }}
               >
                 Sign up
-              </span>
+              </Link>
             </p>
           </form>
 
-          <button
-            onClick={() => navigate("/")}
+          <Link
+            to="/"
             style={{
               width: "100%",
               padding: "12px",
@@ -235,10 +233,9 @@ const Login = () => {
             }}
           >
             ← Back to home
-          </button>
+          </Link>
         </div>
       </div>
-      <ToastContainer position="top-right" autoClose={3000} />
     </>
   )
 }

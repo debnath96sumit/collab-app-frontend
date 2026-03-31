@@ -1,78 +1,44 @@
-import React, { useState } from 'react';
-import { useNavigate } from "react-router-dom";
-import { ToastContainer } from "react-toastify";
-import { registerSchema } from "../lib/validations/auth";
-import "react-toastify/dist/ReactToastify.css";
-import { toast } from "react-toastify";
-import ApiService from '../services/api';
-import { Eye, EyeOff } from 'lucide-react';
+import { useState } from 'react';
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from '../context/AuthContext';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 const Register = () => {
   const navigate = useNavigate();
-
+  const { signup } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [registerData, setRegisterData] = useState({
+    fullName: "",
     username: "",
     email: "",
     password: "",
     confirmPassword: ""
   });
-  const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const handleRegisterInputChange = (e) => {
     const { name, value } = e.target;
     setRegisterData((prev) => ({ ...prev, [name]: value }));
-    // Clear error for the field being edited
-    if (errors[name]) {
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
-    }
   };
 
   const handleSignup = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setErrors({});
-
-    const result = registerSchema.safeParse(registerData);
-
-    if (!result.success) {
-      const fieldErrors = {};
-      const errorList = result.error?.errors || result.error?.issues || [];
-
-      if (Array.isArray(errorList)) {
-        errorList.forEach((err) => {
-          fieldErrors[err.path[0]] = err.message;
-        });
-      } else {
-        console.error("Unexpected error structure:", result.error);
-      }
-
-      setErrors(fieldErrors);
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      await ApiService.register({
-        username: registerData.username,
-        email: registerData.email,
-        password: registerData.password
-      });
-
-      toast.success("Account created successfully! Redirecting to login...");
-      setTimeout(() => {
-        navigate("/login");
-      }, 1500);
-    } catch (err) {
-      console.error(err);
-      toast.error(err.response?.data?.message || "Registration failed. Please try again.");
+      const response = await signup(
+        registerData.fullName,
+        registerData.username,
+        registerData.email,
+        registerData.password
+      );
+      if (response.success) {
+        navigate('/dashboard');
+      }
+    } catch (error) {
+      console.log('Sign up error', error);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -128,6 +94,33 @@ const Register = () => {
                 fontWeight: '500',
                 color: '#374151'
               }}>
+                Full Name
+              </label>
+              <input
+                type="text"
+                name="fullName"
+                value={registerData.fullName}
+                onChange={handleRegisterInputChange}
+                placeholder="full name"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+            <div style={{ marginBottom: '20px' }}>
+
+              <label style={{
+                display: 'block',
+                marginBottom: '8px',
+                fontWeight: '500',
+                color: '#374151'
+              }}>
                 User Name
               </label>
               <input
@@ -139,16 +132,14 @@ const Register = () => {
                 style={{
                   width: '100%',
                   padding: '12px',
-                  border: `1px solid ${errors.username ? '#ef4444' : '#d1d5db'}`,
+                  border: `1px solid '#d1d5db'`,
                   borderRadius: '8px',
                   fontSize: '16px',
                   outline: 'none',
                   boxSizing: 'border-box'
                 }}
               />
-              {errors.username && (
-                <p style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>{errors.username}</p>
-              )}
+
             </div>
 
             <div style={{ marginBottom: '20px' }}>
@@ -169,16 +160,13 @@ const Register = () => {
                 style={{
                   width: '100%',
                   padding: '12px',
-                  border: `1px solid ${errors.email ? '#ef4444' : '#d1d5db'}`,
+                  border: `1px solid '#d1d5db'`,
                   borderRadius: '8px',
                   fontSize: '16px',
                   outline: 'none',
                   boxSizing: 'border-box'
                 }}
               />
-              {errors.email && (
-                <p style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>{errors.email}</p>
-              )}
             </div>
 
             <div style={{ marginBottom: "20px", position: "relative" }}>
@@ -192,45 +180,31 @@ const Register = () => {
               >
                 Password
               </label>
-
-              <input
-                type={showPassword ? "text" : "password"}
-                name="password"
-                value={registerData.password}
-                onChange={handleRegisterInputChange}
-                placeholder="••••••••"
-                style={{
-                  width: "100%",
-                  padding: "12px 42px 12px 12px",
-                  border: `1px solid ${errors.password ? "#ef4444" : "#d1d5db"}`,
-                  borderRadius: "8px",
-                  fontSize: "16px",
-                  outline: "none",
-                  boxSizing: "border-box",
-                }}
-              />
-
-              <button
-                type="button"
-                onClick={() => setShowPassword((p) => !p)}
-                style={{
-                  position: "absolute",
-                  right: "10px",
-                  top: "38px",
-                  background: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "#4f46e5",
-                }}
-              >
-                {showPassword ? <EyeOff /> : <Eye />}
-              </button>
-
-              {errors.password && (
-                <p style={{ color: "#ef4444", fontSize: "12px", marginTop: "4px" }}>
-                  {errors.password}
-                </p>
-              )}
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  value={registerData.password}
+                  onChange={handleRegisterInputChange}
+                  placeholder="••••••••"
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    fontSize: '16px',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-300 transition"
+                >
+                  {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
+                </button>
+              </div>
             </div>
 
             <div style={{ marginBottom: "24px", position: "relative" }}>
@@ -244,51 +218,36 @@ const Register = () => {
               >
                 Confirm Password
               </label>
-
-              <input
-                type={showConfirmPassword ? "text" : "password"}
-                name="confirmPassword"
-                value={registerData.confirmPassword}
-                onChange={handleRegisterInputChange}
-                placeholder="••••••••"
-                style={{
-                  width: "100%",
-                  padding: "12px 42px 12px 12px",
-                  border: `1px solid ${errors.confirmPassword ? "#ef4444" : "#d1d5db"
-                    }`,
-                  borderRadius: "8px",
-                  fontSize: "16px",
-                  outline: "none",
-                  boxSizing: "border-box",
-                }}
-              />
-
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword((p) => !p)}
-                style={{
-                  position: "absolute",
-                  right: "10px",
-                  top: "38px",
-                  background: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "#4f46e5",
-                }}
-              >
-                {showConfirmPassword ? <EyeOff /> : <Eye />}
-              </button>
-
-              {errors.confirmPassword && (
-                <p style={{ color: "#ef4444", fontSize: "12px", marginTop: "4px" }}>
-                  {errors.confirmPassword}
-                </p>
-              )}
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  name="confirmPassword"
+                  value={registerData.confirmPassword}
+                  onChange={handleRegisterInputChange}
+                  placeholder="••••••••"
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    fontSize: '16px',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-300 transition"
+                >
+                  {showConfirmPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
+                </button>
+              </div>
             </div>
 
             <button
               onClick={handleSignup}
-              disabled={isLoading}
+              disabled={loading}
               style={{
                 width: '100%',
                 padding: '12px',
@@ -303,7 +262,7 @@ const Register = () => {
                 opacity: isLoading ? 0.7 : 1
               }}
             >
-              {isLoading ? "Creating account..." : "Create account"}
+              {loading ? 'Creating account...' : 'Create account'}
             </button>
 
             <p style={{
@@ -317,17 +276,17 @@ const Register = () => {
 
             <p style={{ textAlign: 'center', color: '#6b7280', fontSize: '14px' }}>
               Already have an account?{' '}
-              <span
-                onClick={() => navigate('/login')}
+              <Link
+                to="/login"
                 style={{ color: '#4f46e5', cursor: 'pointer', fontWeight: '500' }}
               >
                 Log in
-              </span>
+              </Link>
             </p>
           </div>
 
-          <button
-            onClick={() => navigate('/')}
+          <Link
+            to="/"
             style={{
               width: '100%',
               padding: '12px',
@@ -341,10 +300,9 @@ const Register = () => {
             }}
           >
             ← Back to home
-          </button>
+          </Link>
         </div>
       </div>
-      <ToastContainer position="top-right" autoClose={3000} />
     </>
   )
 }

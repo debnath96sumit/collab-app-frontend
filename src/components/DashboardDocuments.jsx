@@ -12,17 +12,16 @@ import {
   Clock,
   X,
 } from 'lucide-react';
-import ApiService from "../services/api";
+import { DocumentAPI } from "../utils/api";
 import { useNavigate } from "react-router-dom";
 import { formatDate } from '../helpers';
 import { useAuth } from "../contexts/AuthContext";
-import { toast } from 'react-toastify';
 
 const DocumentDashboard = () => {
-  const { logout } = useAuth();
   const [myDocuments, setMyDocuments] = useState([]);
   const [sharedDocuments, setSharedDocuments] = useState([]);
-
+  const [documents, setDocuments] = useState([]);
+  const { logout } = useAuth();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -40,10 +39,8 @@ const DocumentDashboard = () => {
 
   const loadDocuments = async () => {
     try {
-      const response = await ApiService.getAllDocuments();
-      const { myDocs, sharedWithMe } = response.data.data;
-      setMyDocuments(myDocs || []);
-      setSharedDocuments(sharedWithMe || []);
+      const data = await DocumentAPI.getAllDocuments();
+      setDocuments(data.data);
     } catch (error) {
       console.error('Error loading documents:', error);
       setMyDocuments([]);
@@ -58,8 +55,8 @@ const DocumentDashboard = () => {
     }
 
     try {
-      const response = await ApiService.createDocument({ title: newDocTitle, content: '' });
-      setMyDocuments([response.data.data, ...myDocuments]);
+      const data = await DocumentAPI.createDocument({ title: newDocTitle, content: '' });
+      setDocuments([data.data, ...documents]);
       setShowCreateModal(false);
       setNewDocTitle('');
     } catch (error) {
@@ -75,15 +72,12 @@ const DocumentDashboard = () => {
     }
 
     try {
-      const response = await ApiService.updateDocument(selectedDocument.id, {
+      const response = await DocumentAPI.updateDocument(selectedDocument.id, {
         title: editDocTitle,
       });
       if (response.statusText === 'OK') {
-        const updatedDoc = response.data.data;
-        setMyDocuments(myDocuments.map(doc =>
-          doc.id === updatedDoc.id ? updatedDoc : doc
-        ));
-        setSharedDocuments(sharedDocuments.map(doc =>
+        const updatedDoc = response.data;
+        setDocuments(documents.map(doc =>
           doc.id === updatedDoc.id ? updatedDoc : doc
         ));
         setShowEditModal(false);
@@ -98,7 +92,7 @@ const DocumentDashboard = () => {
 
   const handleDeleteDocument = async () => {
     try {
-      const response = await ApiService.deleteDocument(selectedDocument.id);
+      const response = await DocumentAPI.deleteDocument(selectedDocument.id);
       if (response.data) {
         setMyDocuments(myDocuments.filter(doc => doc.id !== selectedDocument.id));
         setSharedDocuments(sharedDocuments.filter(doc => doc.id !== selectedDocument.id));
@@ -109,15 +103,6 @@ const DocumentDashboard = () => {
       console.error('Error deleting document:', error);
       alert('Failed to delete document');
     }
-  };
-
-  const handleLogout = async () => {
-    await logout();
-    toast.success('Logged out successfully! Redirecting to home page...');
-
-    setTimeout(() => {
-      navigate('/');
-    }, 1500);
   };
 
   const openEditModal = (doc) => {
@@ -206,7 +191,7 @@ const DocumentDashboard = () => {
               zIndex: 50
             }}>
               <button
-                onClick={handleLogout}
+                onClick={logout}
                 style={{
                   width: '100%',
                   padding: '12px 16px',
@@ -755,6 +740,7 @@ const DocumentDashboard = () => {
   );
 };
 
+
 export default DocumentDashboard;
 
 const DocumentCard = ({ doc, openDocument, openEditModal, openDeleteModal, formatDate }) => (
@@ -909,4 +895,4 @@ const DocumentCard = ({ doc, openDocument, openEditModal, openDeleteModal, forma
       </div>
     </div>
   </div>
-);
+)
