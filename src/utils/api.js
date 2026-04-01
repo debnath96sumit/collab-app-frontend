@@ -1,7 +1,7 @@
 import axiosInstance from "./axiosInstance";
 
 export const AuthAPI = {
-  signup: async ({ fullName, email, phone, password }) => axiosInstance.post('/v1/auth/register', { fullName, email, phone, password }),
+  signup: async ({ fullName, username, email, password }) => axiosInstance.post('/v1/auth/register', { fullName, username, email, password }),
 
   login: async ({ email, password }) => axiosInstance.post('/v1/auth/login', { email, password }),
 
@@ -9,7 +9,7 @@ export const AuthAPI = {
 
   githubSignIn: async () => axiosInstance.get('/v1/auth/github'),
 
-  logout: async () => axiosInstance.get('/v1/auth/logout'),
+  logout: async (refreshToken) => axiosInstance.post('/v1/auth/logout', { refreshToken }),
 
   forgotPassword: async ({ email }) => axiosInstance.post('/v1/auth/forgot-password', { email }),
 
@@ -21,21 +21,21 @@ export const AuthAPI = {
 };
 
 export const UserAPI = {
-  getProfile: async () => axiosInstance.get('/v1/user/profile-details'),
+  getProfile: async () => axiosInstance.get('/v1/users/profile-details'),
 
-  updateProfile: async (userData) => axiosInstance.post('/v1/user/update-profile', userData),
+  updateProfile: async (userData) => axiosInstance.post('/v1/users/update-profile', userData),
 
-  changePassword: async ({ oldPassword, newPassword }) => axiosInstance.post('/v1/user/change-password', { oldPassword, newPassword }),
+  changePassword: async ({ oldPassword, newPassword }) => axiosInstance.post('/v1/users/change-password', { oldPassword, newPassword }),
 };
 
 export const DocumentAPI = {
   getDocument: async (documentId) => await axiosInstance.get(`/v1/documents/${documentId}`),
 
-  getAllDocuments: async () => await axiosInstance.get(`/v1/documents`),
+  getAllDocuments: async () => await axiosInstance.get(`/v1/documents/get-my-docs`),
 
   updateDocument: async (documentId, data) => await axiosInstance.put(`/v1/documents/${documentId}`, data),
 
-  createDocument: async (data) => await axiosInstance.post(`/v1/documents`, data),
+  createDocument: async (data) => await axiosInstance.post(`/v1/documents/create`, data),
 
   deleteDocument: async (documentId) => await axiosInstance.delete(`/v1/documents/${documentId}`),
 }

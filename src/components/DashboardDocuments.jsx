@@ -15,12 +15,11 @@ import {
 import { DocumentAPI } from "../utils/api";
 import { useNavigate } from "react-router-dom";
 import { formatDate } from '../helpers';
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../context/AuthContext";
 
 const DocumentDashboard = () => {
   const [myDocuments, setMyDocuments] = useState([]);
   const [sharedDocuments, setSharedDocuments] = useState([]);
-  const [documents, setDocuments] = useState([]);
   const { logout } = useAuth();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -40,7 +39,9 @@ const DocumentDashboard = () => {
   const loadDocuments = async () => {
     try {
       const data = await DocumentAPI.getAllDocuments();
-      setDocuments(data.data);
+      setMyDocuments(data.data.myDocs);
+
+      setSharedDocuments(data.data.sharedWithMe);
     } catch (error) {
       console.error('Error loading documents:', error);
       setMyDocuments([]);
@@ -55,8 +56,10 @@ const DocumentDashboard = () => {
     }
 
     try {
-      const data = await DocumentAPI.createDocument({ title: newDocTitle, content: '' });
-      setDocuments([data.data, ...documents]);
+      const data = await DocumentAPI.createDocument({ title: newDocTitle });
+      console.log('ssssssssss', data);
+
+      setMyDocuments([...myDocuments, data.data]);
       setShowCreateModal(false);
       setNewDocTitle('');
     } catch (error) {
@@ -77,7 +80,10 @@ const DocumentDashboard = () => {
       });
       if (response.statusText === 'OK') {
         const updatedDoc = response.data;
-        setDocuments(documents.map(doc =>
+        setMyDocuments(myDocuments.map(doc =>
+          doc.id === updatedDoc.id ? updatedDoc : doc
+        ));
+        setSharedDocuments(sharedDocuments.map(doc =>
           doc.id === updatedDoc.id ? updatedDoc : doc
         ));
         setShowEditModal(false);
@@ -120,11 +126,11 @@ const DocumentDashboard = () => {
     navigate(`/board/${doc.id}`);
   };
 
-  const filteredMyDocuments = myDocuments.filter(doc =>
+  const filteredMyDocuments = myDocuments?.filter(doc =>
     doc.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredSharedDocuments = sharedDocuments.filter(doc =>
+  const filteredSharedDocuments = sharedDocuments?.filter(doc =>
     doc.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -235,7 +241,7 @@ const DocumentDashboard = () => {
               My Documents
             </h1>
             <p style={{ color: '#6b7280', fontSize: '16px' }}>
-              {myDocuments.length + sharedDocuments.length} {(myDocuments.length + sharedDocuments.length) === 1 ? 'document' : 'documents'}
+              {myDocuments?.length + sharedDocuments?.length} {(myDocuments?.length + sharedDocuments?.length) === 1 ? 'document' : 'documents'}
             </p>
           </div>
 
@@ -293,7 +299,7 @@ const DocumentDashboard = () => {
         </div>
 
         {/* Documents Grid */}
-        {filteredMyDocuments.length === 0 && filteredSharedDocuments.length === 0 ? (
+        {filteredMyDocuments?.length === 0 && filteredSharedDocuments?.length === 0 ? (
           <div style={{
             textAlign: 'center',
             padding: '80px 20px',
@@ -339,7 +345,7 @@ const DocumentDashboard = () => {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
             {/* My Documents Section */}
-            {filteredMyDocuments.length > 0 && (
+            {filteredMyDocuments?.length > 0 && (
               <div>
                 <h2 style={{
                   fontSize: '20px',
@@ -352,7 +358,7 @@ const DocumentDashboard = () => {
                   gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
                   gap: '24px'
                 }}>
-                  {filteredMyDocuments.map((doc) => (
+                  {filteredMyDocuments?.map((doc) => (
                     <DocumentCard
                       key={doc.id}
                       doc={doc}
@@ -367,7 +373,7 @@ const DocumentDashboard = () => {
             )}
 
             {/* Shared With Me Section */}
-            {filteredSharedDocuments.length > 0 && (
+            {filteredSharedDocuments?.length > 0 && (
               <div>
                 <h2 style={{
                   fontSize: '20px',
@@ -380,7 +386,7 @@ const DocumentDashboard = () => {
                   gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
                   gap: '24px'
                 }}>
-                  {filteredSharedDocuments.map((doc) => (
+                  {filteredSharedDocuments?.map((doc) => (
                     <DocumentCard
                       key={doc.id}
                       doc={doc}

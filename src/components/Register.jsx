@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from '../context/AuthContext';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { registerSchema } from '../lib/validations/auth';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -9,6 +10,11 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
+  useEffect(() => {
+    document.title = 'Sign Up - Collab App';
+  }, []);
+
   const [registerData, setRegisterData] = useState({
     fullName: "",
     username: "",
@@ -16,7 +22,6 @@ const Register = () => {
     password: "",
     confirmPassword: ""
   });
-  const [isLoading, setIsLoading] = useState(false);
   const handleRegisterInputChange = (e) => {
     const { name, value } = e.target;
     setRegisterData((prev) => ({ ...prev, [name]: value }));
@@ -24,14 +29,19 @@ const Register = () => {
 
   const handleSignup = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
+    setFieldErrors({});
+
+    const parsed = registerSchema.safeParse(registerData);
+    if (!parsed.success) {
+      const nextFieldErrors = parsed.error.flatten().fieldErrors;
+      setFieldErrors(nextFieldErrors);
+      return;
+    }
+
+    setLoading(true);
+
     try {
-      const response = await signup(
-        registerData.fullName,
-        registerData.username,
-        registerData.email,
-        registerData.password
-      );
+      const response = await signup(parsed.data.fullName, parsed.data.username, parsed.data.email, parsed.data.password);
       if (response.success) {
         navigate('/dashboard');
       }
@@ -40,7 +50,7 @@ const Register = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   return (
     <>
@@ -112,6 +122,9 @@ const Register = () => {
                   boxSizing: 'border-box'
                 }}
               />
+              {fieldErrors.fullName?.[0] && (
+                <p className="mt-1 text-sm text-red-400">{fieldErrors.fullName[0]}</p>
+              )}
             </div>
             <div style={{ marginBottom: '20px' }}>
 
@@ -139,7 +152,9 @@ const Register = () => {
                   boxSizing: 'border-box'
                 }}
               />
-
+              {fieldErrors.username?.[0] && (
+                <p className="mt-1 text-sm text-red-400">{fieldErrors.username[0]}</p>
+              )}
             </div>
 
             <div style={{ marginBottom: '20px' }}>
@@ -167,6 +182,9 @@ const Register = () => {
                   boxSizing: 'border-box'
                 }}
               />
+              {fieldErrors.email?.[0] && (
+                <p className="mt-1 text-sm text-red-400">{fieldErrors.email[0]}</p>
+              )}
             </div>
 
             <div style={{ marginBottom: "20px", position: "relative" }}>
@@ -205,6 +223,9 @@ const Register = () => {
                   {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
                 </button>
               </div>
+              {fieldErrors.password?.[0] && (
+                <p className="mt-1 text-sm text-red-400">{fieldErrors.password[0]}</p>
+              )}
             </div>
 
             <div style={{ marginBottom: "24px", position: "relative" }}>
@@ -251,15 +272,15 @@ const Register = () => {
               style={{
                 width: '100%',
                 padding: '12px',
-                backgroundColor: isLoading ? '#818cf8' : '#4f46e5',
+                backgroundColor: loading ? '#818cf8' : '#4f46e5',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
                 fontSize: '16px',
                 fontWeight: '600',
-                cursor: isLoading ? 'not-allowed' : 'pointer',
+                cursor: loading ? 'not-allowed' : 'pointer',
                 marginBottom: '16px',
-                opacity: isLoading ? 0.7 : 1
+                opacity: loading ? 0.7 : 1
               }}
             >
               {loading ? 'Creating account...' : 'Create account'}

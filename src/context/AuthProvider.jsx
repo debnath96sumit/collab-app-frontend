@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const data = await AuthAPI.login(email, password);
+      const data = await AuthAPI.login({ email, password });
 
       localStorage.setItem('access_token', data.data.accessToken);
       if (data.data.refreshToken) {
@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }) => {
 
   const signup = async (fullName, username, email, password) => {
     try {
-      const data = await AuthAPI.signup(fullName, username, email, password);
+      const data = await AuthAPI.signup({ fullName, username, email, password });
 
       localStorage.setItem('access_token', data.data.accessToken);
       if (data.data.refreshToken) {
@@ -81,7 +81,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       if (token) {
-        await AuthAPI.logout();
+        await AuthAPI.logout(refreshToken);
       }
     } catch (error) {
       console.error('Logout error:', error);

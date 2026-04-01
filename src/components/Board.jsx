@@ -3,8 +3,8 @@ import io from 'socket.io-client';
 import { DocumentAPI } from '../utils/api';
 import { debounce } from 'lodash';
 import { useParams } from "react-router-dom";
-import { formatDate, getUserFromToken } from '../helpers';
-
+import { formatDate } from '../helpers';
+import { useAuth } from '../context/AuthContext';
 const CollaborativeEditor = () => {
   const { id } = useParams();
   const [socket, setSocket] = useState(null);
@@ -18,29 +18,7 @@ const CollaborativeEditor = () => {
     content: '',
     collaborators: []
   });
-
-  useEffect(() => {
-    const user = getUserFromToken();
-    setCurrentUser(user);
-
-    const socket = io(import.meta.env.VITE_API_URL);
-    setSocket(socket);
-
-    const fetchDocument = async () => {
-      try {
-        const response = await DocumentAPI.getDocument(id);
-        setDocument(response.data);
-        socket.emit('joinDocument', id);
-      } catch (error) {
-        console.error('Failed to fetch document:', error);
-      }
-    };
-    fetchDocument();
-
-    return () => {
-      socket.disconnect();
-    };
-  }, [id]);
+  const { user } = useAuth();
 
   const COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
 
@@ -56,21 +34,38 @@ const CollaborativeEditor = () => {
   })) : [];
 
   useEffect(() => {
-    if (!socket) return;
-    socket.on('connected', (data) => {
-      console.log(data);
-      setIsConnected(true);
-    })
-
-    socket.on('documentUpdated', (content) => {
-      setDocument(prev => ({ ...prev, content }));
+    setCurrentUser(user);
+    const token = localStorage.getItem('access_token');
+    const socketInstance = io(`${import.meta.env.VITE_API_URL}/document-edits`, {
+      auth: { token },
+      transports: ['websocket'],
     });
 
-    socket.on('disconnect', () => {
+    setSocket(socketInstance);
+
+    socketInstance.on('connect', async () => {
+      console.log('✅ Connected:', socketInstance.id);
+      setIsConnected(true);
+
+      try {
+        const response = await DocumentAPI.getDocument(id);
+        setDocument(response.data);
+
+        socketInstance.emit('joinDocument', id);
+      } catch (error) {
+        console.error('Failed to fetch document:', error);
+      }
+    });
+
+    socketInstance.on('disconnect', () => {
+      console.log('❌ Disconnected');
       setIsConnected(false);
     });
 
-  }, [socket]);
+    return () => {
+      socketInstance.disconnect();
+    };
+  }, [id]);
 
 
   const debouncedEmit = useCallback(

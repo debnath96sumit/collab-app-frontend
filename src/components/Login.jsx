@@ -2,12 +2,15 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from '../context/AuthContext';
 import { Eye, EyeOff } from 'lucide-react';
+import { loginSchema } from '../lib/validations/auth';
 const Login = () => {
   const navigate = useNavigate();
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
+
   useEffect(() => {
     document.title = 'Sign In - Collab App';
   }, []);
@@ -25,24 +28,31 @@ const Login = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    try {
-      const response = await login({
-        email: loginData.email,
-        password: loginData.password,
-      });
+    setFieldErrors({});
 
+    const parsed = loginSchema.safeParse(loginData);
+    if (!parsed.success) {
+      const nextFieldErrors = parsed.error.flatten().fieldErrors;
+      setFieldErrors(nextFieldErrors);
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await login(
+        parsed.data.email,
+        parsed.data.password
+      );
       if (response.success) {
-        navigate("/dashboard");
-      } else {
-        navigate("/");
+        navigate('/dashboard');
       }
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.log('Sign up error', error);
     } finally {
       setLoading(false);
     }
-  };
+  }
   return (
     <>
       <div
@@ -128,6 +138,9 @@ const Login = () => {
                   boxSizing: "border-box",
                 }}
               />
+              {fieldErrors.email && (
+                <p className="mt-1 text-sm text-red-400">{fieldErrors.email[0]}</p>
+              )}
             </div>
 
             <div style={{ marginBottom: "16px", position: "relative" }}>
@@ -141,40 +154,43 @@ const Login = () => {
               >
                 Password
               </label>
-
-              <input
-                type={showPassword ? "text" : "password"}
-                name="password"
-                value={loginData.password}
-                onChange={handleLoginInputChange}
-                placeholder="••••••••"
-                style={{
-                  width: "100%",
-                  padding: "12px 40px 12px 12px",
-                  border: "1px solid #d1d5db",
-                  borderRadius: "8px",
-                  fontSize: "16px",
-                  outline: "none",
-                  boxSizing: "border-box",
-                }}
-              />
-
-              <button
-                type="button"
-                onClick={() => setShowPassword((prev) => !prev)}
-                style={{
-                  position: "absolute",
-                  right: "10px",
-                  top: "38px",
-                  background: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                  color: "#4f46e5",
-                }}
-              >
-                {showPassword ? <EyeOff /> : <Eye />}
-              </button>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  value={loginData.password}
+                  onChange={handleLoginInputChange}
+                  placeholder="••••••••"
+                  style={{
+                    width: "100%",
+                    padding: "12px 40px 12px 12px",
+                    border: "1px solid #d1d5db",
+                    borderRadius: "8px",
+                    fontSize: "16px",
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  style={{
+                    position: "absolute",
+                    right: "10px",
+                    top: "38px",
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                    color: "#4f46e5",
+                  }}
+                >
+                  {showPassword ? <EyeOff /> : <Eye />}
+                </button>
+              </div>
+              {fieldErrors.password && (
+                <p className="mt-1 text-sm text-red-400">{fieldErrors.password[0]}</p>
+              )}
             </div>
 
             <div style={{ marginBottom: "24px", cursor: "pointer" }}>
