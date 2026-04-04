@@ -1,13 +1,13 @@
 import './App.css'
 import Board from './components/Board.jsx'
-import Home from './components/Home.jsx'
+import Home from './pages/Home.jsx'
 import { AuthProvider } from './context/AuthProvider.jsx';
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import PublicRoute from './components/auth/PublicRoute.jsx'
-import DocumentDashboard from './components/DashboardDocuments.jsx'
-import Login from './components/Login.jsx'
-import Register from './components/Register.jsx'
+import Dashboard from './pages/Dashboard.jsx'
+import Login from './pages/Login.jsx'
+import Register from './pages/Register.jsx'
 import Toaster from './components/Toaster.jsx'
 
 function App() {
@@ -33,7 +33,7 @@ function App() {
             path="/dashboard"
             element={
               <ProtectedRoute>
-                <DocumentDashboard />
+                <Dashboard />
               </ProtectedRoute>
             }
           />

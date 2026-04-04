@@ -33,7 +33,7 @@ export const DocumentAPI = {
 
   getAllDocuments: async () => await axiosInstance.get(`/v1/documents/get-my-docs`),
 
-  updateDocument: async (documentId, data) => await axiosInstance.put(`/v1/documents/${documentId}`, data),
+  updateDocument: async (documentId, data) => await axiosInstance.patch(`/v1/documents/${documentId}`, data),
 
   createDocument: async (data) => await axiosInstance.post(`/v1/documents/create`, data),
 
