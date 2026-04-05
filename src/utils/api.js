@@ -17,7 +17,7 @@ export const AuthAPI = {
 
   resetPassword: async ({ email, newPassword }) => axiosInstance.post('/v1/auth/reset-password', { email, newPassword }),
 
-  refreshToken: async (accessToken, refreshToken) => axiosInstance.post('/v1/auth/refresh-token', { accessToken, refreshToken }),
+  refreshToken: async (refreshToken) => axiosInstance.post('/v1/auth/refresh-token', { refreshToken }),
 };
 
 export const UserAPI = {

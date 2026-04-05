@@ -1,14 +1,16 @@
 import './App.css'
-import Board from './components/Board.jsx'
+// import Board from './components/Board.jsx'
 import Home from './pages/Home.jsx'
 import { AuthProvider } from './context/AuthProvider.jsx';
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import PublicRoute from './components/auth/PublicRoute.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
 import Toaster from './components/Toaster.jsx'
+import Editor from './pages/Editor.jsx'
+import NotFound from './pages/NotFound.jsx'
 
 function App() {
   return (
@@ -41,12 +43,12 @@ function App() {
             path="/board/:id"
             element={
               <ProtectedRoute>
-                <Board />
+                <Editor />
               </ProtectedRoute>
             }
           />
 
-          <Route path="*" element={<Navigate to="/" />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </AuthProvider>
     </Router>
