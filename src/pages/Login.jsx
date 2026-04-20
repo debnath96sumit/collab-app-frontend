@@ -57,9 +57,9 @@ const Login = () => {
       <main className="w-full max-w-md z-10">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-12 h-12 bg-primary-container/20 rounded-xl flex items-center justify-center mb-4 border border-outline-variant/20 shadow-lg shadow-blue-500/5">
+          <Link to="/" className="w-12 h-12 bg-primary-container/20 rounded-xl flex items-center justify-center mb-4 border border-outline-variant/20 shadow-lg shadow-blue-500/5">
             <FileText size={24} className="text-primary" fill="currentColor" />
-          </div>
+          </Link>
           <h1 className="font-headline text-2xl font-bold tracking-tight text-on-surface">
             CollabDocs
           </h1>

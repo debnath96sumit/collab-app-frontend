@@ -5,7 +5,7 @@ const Hero = () => {
     const navigate = useNavigate();
 
     return (
-        <section className="relative pt-24 pb-32 px-6 overflow-hidden">
+        <section id="how-it-works" className="relative pt-24 pb-32 px-6 overflow-hidden">
             <div className="max-w-5xl mx-auto text-center relative z-10">
                 <h1 className="text-5xl md:text-7xl font-extrabold font-headline tracking-tight text-on-surface mb-6 leading-[1.1]">
                     Where Focus Meets <br />

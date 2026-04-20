@@ -51,7 +51,7 @@ const Pricing = () => {
     const navigate = useNavigate();
 
     return (
-        <section className="py-32 px-6">
+        <section id="pricing" className="py-32 px-6">
             <div className="max-w-6xl mx-auto">
                 <div className="text-center mb-20">
                     <h2 className="text-3xl md:text-5xl font-bold font-headline mb-6 tracking-tight">

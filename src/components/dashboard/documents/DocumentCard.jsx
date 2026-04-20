@@ -1,5 +1,5 @@
 import { FileText, MoreVertical } from 'lucide-react';
-import { formatDate } from '../../../helpers';
+import { formatDate, getInitials } from '../../../helpers';
 import DocumentCardMenu from './DocumentCardMenu';
 import { useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
@@ -100,7 +100,7 @@ const DocumentCard = ({ doc, role = 'owner', onOpen, onRename, onDelete }) => {
                                     className="w-full h-full rounded-full object-cover"
                                 />
                             ) : (
-                                doc.owner?.username?.[0]?.toUpperCase() ?? 'U'
+                                getInitials(doc.owner?.fullName)
                             )}
                         </div>
                         <span className="text-xs text-on-surface-variant truncate max-w-[80px]">

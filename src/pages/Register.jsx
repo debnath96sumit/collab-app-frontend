@@ -71,9 +71,9 @@ const Register = () => {
       <main className="w-full max-w-[480px] z-10">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="mb-4 bg-primary-container p-3 rounded-xl shadow-lg shadow-primary-container/20">
+          <Link to="/" className="mb-4 bg-primary-container p-3 rounded-xl shadow-lg shadow-primary-container/20">
             <FileText size={28} className="text-on-primary-container" fill="currentColor" />
-          </div>
+          </Link>
           <h1 className="font-headline font-extrabold text-3xl tracking-tight text-on-surface mb-1">
             CollabDocs
           </h1>

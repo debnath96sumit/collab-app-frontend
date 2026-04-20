@@ -1,9 +1,10 @@
 import { FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 
 const Navbar = () => {
     const navigate = useNavigate();
-
+    const [active, setActive] = useState('how-it-works');
     return (
         <nav className="bg-slate-900/60 backdrop-blur-xl font-headline antialiased w-full h-16 sticky top-0 z-50 shadow-sm shadow-blue-500/5 flex items-center justify-between px-6">
             <div className="flex items-center gap-8">
@@ -14,14 +15,33 @@ const Navbar = () => {
                     </span>
                 </div>
                 <div className="hidden md:flex items-center gap-6 text-sm font-medium">
-                    <a className="text-blue-400 border-b-2 border-blue-500 pb-1 cursor-pointer">
-                        Documents
+                    <a
+                        onClick={(e) => {
+                            e.preventDefault();
+                            setActive('how-it-works');
+                            document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
+                        }}
+                        className={active === 'how-it-works' ? 'text-blue-400 border-b-2 border-blue-500 pb-1 cursor-pointer' : 'text-slate-400 hover:text-slate-200 transition-colors cursor-pointer'}>
+                        How It Works
                     </a>
-                    <a className="text-slate-400 hover:text-slate-200 transition-colors cursor-pointer">
-                        Shared
+                    <a
+                        onClick={(e) => {
+                            e.preventDefault();
+                            setActive('features');
+                            document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+                        }}
+                        className={active === 'features' ? 'text-blue-400 border-b-2 border-blue-500 pb-1 cursor-pointer' : 'text-slate-400 hover:text-slate-200 transition-colors cursor-pointer'}>
+                        Features
                     </a>
-                    <a className="text-slate-400 hover:text-slate-200 transition-colors cursor-pointer">
-                        Templates
+                    <a
+                        onClick={(e) => {
+                            e.preventDefault();
+                            setActive('pricing');
+                            document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
+                        }}
+                        className={active === 'pricing' ? 'text-blue-400 border-b-2 border-blue-500 pb-1 cursor-pointer' : 'text-slate-400 hover:text-slate-200 transition-colors cursor-pointer'}
+                    >
+                        Pricing
                     </a>
                 </div>
             </div>

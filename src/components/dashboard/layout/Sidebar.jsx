@@ -5,11 +5,15 @@ import {
     Plus,
     HelpCircle,
     Zap,
+    Trash2,
+    Clock
 } from 'lucide-react';
 
 const navItems = [
     { icon: FolderOpen, label: 'My Workspace', path: '/dashboard', tab: 'my' },
     { icon: Users, label: 'Shared With Me', path: '/dashboard', tab: 'shared' },
+    { icon: Clock, label: 'Recent', path: '/dashboard', tab: 'recent' },
+    { icon: Trash2, label: 'Trash', path: '/dashboard', tab: 'trash' },
 ];
 
 const Sidebar = ({ activeTab, onTabChange, onNewDocument }) => {
@@ -17,7 +21,7 @@ const Sidebar = ({ activeTab, onTabChange, onNewDocument }) => {
     const location = useLocation();
 
     return (
-        <aside className="h-screen w-64 flex-shrink-0 bg-slate-950 flex flex-col pt-20 border-r border-outline-variant/10">
+        <aside className="h-screen w-64 flex-shrink-0 bg-slate-950 flex flex-col pt-5 border-r border-outline-variant/10">
             {/* Workspace label */}
 
             <div className="px-6 mb-6">
@@ -26,10 +30,10 @@ const Sidebar = ({ activeTab, onTabChange, onNewDocument }) => {
                         <FolderOpen size={16} className="text-blue-400" />
                     </div>
                     <div>
-                        <p className="text-sm font-semibold text-slate-200 leading-tight">
+                        <p className="text-sm font-bold text-slate-400 leading-tight">
                             My Workspace
                         </p>
-                        <p className="text-[10px] text-slate-500 uppercase tracking-wider">
+                        <p className="text-[10px] text-slate-500 uppercase tracking-wider pt-1">
                             Collaborative Space
                         </p>
                     </div>

@@ -23,7 +23,7 @@ const COLORS = [
 const getColor = (userId) => {
     // TODO: derive index from userId to pick a consistent color
     // hint: use charCodeAt(0) % COLORS.length like your existing getUserColor
-    const index = userId?.charCodeAt(0) % COLORS.length ?? 0;
+    const index = userId?.charCodeAt(0) % COLORS.length || 0;
     return COLORS[index];
 };
 
