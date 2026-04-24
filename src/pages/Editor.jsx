@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import EditorHeader from '../components/editor/EditorHeader';
 import EditorSidebar from '../components/editor/EditorSidebar';
 import EditorToolbar from '../components/editor/EditorToolbar';
@@ -9,25 +9,21 @@ import { useParams } from "react-router-dom";
 import { DocumentAPI } from '../utils/api';
 import io from 'socket.io-client';
 import ShareModal from '../components/ShareModal';
+import { debounce } from 'lodash';
 
 const Editor = () => {
     const { user } = useAuth();
     const { id } = useParams();
     const [saveStatus, setSaveStatus] = useState('saved');
     const [isConnected, setIsConnected] = useState(false);
-    // doc state
+
     const [document, setDocument] = useState({
         id: null,
         title: '',
         content: '',
         collaborators: []
     });
-    // socket state
     const [socket, setSocket] = useState(null);
-
-    // presence state
-    // save status state
-    // collab panel open/close state
 
     const [showShareModal, setShowShareModal] = useState(false);
     useEffect(() => {
@@ -63,12 +59,39 @@ const Editor = () => {
             socketInstance.disconnect();
         };
     }, [id]);
+
+    const debouncedEmit = useCallback(
+        debounce((event, payload) => {
+            socket.emit(event, payload);
+            setSaveStatus('saved');
+        }, 1000),
+        [socket]
+    );
+
+    const handleContentChange = (e) => {
+        const newContent = e.target.value;
+
+        setDocument(prev => ({ ...prev, content: newContent }));
+        setSaveStatus('saving');
+
+        debouncedEmit('editDocument', { docId: document.id, content: newContent });
+    };
+
+    const handleTitleChange = (newTitle) => {
+        if (newTitle.length > 50 || newTitle.length < 1) {
+            return;
+        }
+        setDocument(prev => ({ ...prev, title: newTitle }));
+        setSaveStatus('saving');
+
+        debouncedEmit('renameDocument', { docId: document.id, name: newTitle });
+    };
+
     return (
         <div className="bg-background text-on-surface h-screen w-screen overflow-hidden flex flex-col">
             <EditorHeader
                 title={document.title}
-                // onTitleChange={...}
-                // onTitleBlur={...}
+                onTitleChange={handleTitleChange}
                 saveStatus={saveStatus}
                 presence={document.collaborators}
                 isConnected={isConnected}
@@ -82,7 +105,10 @@ const Editor = () => {
                     <EditorToolbar />
 
                     <div className="flex-1 w-full max-w-4xl px-12 overflow-y-auto">
-                        <EditorCanvas />
+                        <EditorCanvas
+                            content={document.content}
+                            onChange={handleContentChange}
+                        />
                     </div>
                 </main>
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { X, Link, Copy, ChevronDown, Check } from 'lucide-react';
-// import { CollaboratorAPI } from '../../utils/api';
+import { CollaboratorAPI } from '../utils/api';
 import ModalWrapper from '../components/dashboard/modals/ModalWrapper';
 
 /**
@@ -77,14 +77,14 @@ const ShareModal = ({ document, onClose }) => {
         setInviteLoading(true);
 
         try {
-            // TODO: replace with your actual API call
-            // const response = await CollaboratorAPI.invite(document.id, {
-            //   email: inviteEmail,
-            //   role: inviteRole,
-            // });
-            // setCollaborators((prev) => [...prev, response.data.data]);
-            // setInviteEmail('');
+            const response = await CollaboratorAPI.invite(document.id, {
+                email: inviteEmail,
+                role: inviteRole,
+            });
+            setCollaborators((prev) => [...prev, response.data.data]);
+            setInviteEmail('');
         } catch (error) {
+            console.log(error);
             setInviteError(error?.response?.data?.message ?? 'Failed to send invite');
         } finally {
             setInviteLoading(false);

@@ -39,3 +39,13 @@ export const DocumentAPI = {
 
   deleteDocument: async (documentId) => await axiosInstance.delete(`/v1/documents/${documentId}`),
 }
+
+export const CollaboratorAPI = {
+  invite: async (documentId, data) => await axiosInstance.post(`/v1/documents/${documentId}/add-collaborators`, data),
+
+  getAllCollaborators: async (documentId) => await axiosInstance.get(`/v1/documents/${documentId}/collaborators`),
+
+  removeCollaborator: async (documentId, collaboratorId) => await axiosInstance.delete(`/v1/documents/${documentId}/collaborators/${collaboratorId}`),
+
+  updateCollaboratorRole: async (documentId, collaboratorId, data) => await axiosInstance.patch(`/v1/documents/${documentId}/collaborators/${collaboratorId}`, data),
+}

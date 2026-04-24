@@ -1,4 +1,4 @@
-import { ArrowLeft, Share2, Bell, Settings, Cloud, CloudOff, Loader2 } from 'lucide-react';
+import { ArrowLeft, Share2, Bell, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import PresenceAvatars from './PresenceAvatars';
 import SaveStatus from './SaveStatus';
@@ -18,7 +18,6 @@ import SaveStatus from './SaveStatus';
 const EditorHeader = ({
     title,
     onTitleChange,
-    onTitleBlur,
     saveStatus,
     presence,
     isConnected,
@@ -56,7 +55,6 @@ const EditorHeader = ({
                         type="text"
                         value={title}
                         onChange={(e) => onTitleChange(e.target.value)}
-                        onBlur={onTitleBlur}
                         placeholder="Untitled Document"
                         className="bg-transparent border-none focus:ring-0 text-slate-200 font-semibold text-base p-1 w-64 outline-none focus:bg-slate-800/40 rounded-lg transition-colors placeholder:text-slate-600"
                     />
