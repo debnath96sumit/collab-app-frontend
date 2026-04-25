@@ -19,6 +19,16 @@ const Register = () => {
     confirmPassword: '',
   });
 
+  const searchParams = new URLSearchParams(window.location.search);
+  const redirect = searchParams.get('redirect');
+
+  useEffect(() => {
+    const inviteEmail = localStorage.getItem('inviteEmail');
+    if (inviteEmail) {
+      setRegisterData((prev) => ({ ...prev, email: inviteEmail }));
+    }
+  }, []);
+
   useEffect(() => {
     document.title = 'Sign Up - CollabDocs';
   }, []);
@@ -50,7 +60,12 @@ const Register = () => {
         parsed.data.password,
       );
       if (response.success) {
-        navigate('/dashboard');
+        localStorage.removeItem('inviteEmail');
+        if (redirect) {
+          window.location.href = decodeURIComponent(redirect);
+        } else {
+          navigate('/dashboard');
+        }
       }
     } catch (error) {
       console.log('Sign up error', error);
@@ -146,6 +161,7 @@ const Register = () => {
                     name="email"
                     value={registerData.email}
                     onChange={handleRegisterInputChange}
+                    readOnly={!!localStorage.getItem('inviteEmail')}
                     placeholder="john@example.com"
                     className={inputClass}
                   />
@@ -234,7 +250,10 @@ const Register = () => {
             <p className="text-sm text-on-surface-variant">
               Already have an account?{' '}
               <Link
-                to="/login"
+                to={redirect
+                  ? `/login?redirect=${encodeURIComponent(redirect)}`
+                  : '/login'
+                }
                 className="text-primary font-semibold hover:text-primary-fixed-dim transition-colors ml-1 underline underline-offset-4 decoration-primary/30"
               >
                 Sign in

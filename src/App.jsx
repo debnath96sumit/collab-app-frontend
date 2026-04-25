@@ -11,6 +11,7 @@ import Register from './pages/Register.jsx'
 import Toaster from './components/Toaster.jsx'
 import Editor from './pages/Editor.jsx'
 import NotFound from './pages/NotFound.jsx'
+import InvitationAccept from './pages/invitation/accept.jsx'
 
 function App() {
   return (
@@ -32,6 +33,10 @@ function App() {
             element={<PublicRoute><Register /></PublicRoute>}
           />
           <Route
+            path="/invitation/accept"
+            element={<InvitationAccept />}
+          />
+          <Route
             path="/dashboard"
             element={
               <ProtectedRoute>
@@ -47,7 +52,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           <Route path="*" element={<NotFound />} />
         </Routes>
       </AuthProvider>

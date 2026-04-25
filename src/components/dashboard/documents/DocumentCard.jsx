@@ -19,7 +19,6 @@ const cardAccentStyles = {
 
 const DocumentCard = ({ doc, role = 'owner', onOpen, onRename, onDelete }) => {
     const [menuOpen, setMenuOpen] = useState(false);
-    console.log(doc);
 
     const { user } = useAuth();
     const isOwner = user?.id === doc.owner_id;

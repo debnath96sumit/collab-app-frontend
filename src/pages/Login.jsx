@@ -12,6 +12,9 @@ const Login = () => {
   const [fieldErrors, setFieldErrors] = useState({});
   const [loginData, setLoginData] = useState({ email: '', password: '' });
 
+  const searchParams = new URLSearchParams(window.location.search);
+  const redirect = searchParams.get('redirect');
+
   useEffect(() => {
     document.title = 'Sign In - CollabDocs';
   }, []);
@@ -37,7 +40,11 @@ const Login = () => {
     try {
       const response = await login(parsed.data.email, parsed.data.password);
       if (response.success) {
-        navigate('/dashboard');
+        if (redirect) {
+          window.location.href = decodeURIComponent(redirect);
+        } else {
+          navigate('/dashboard');
+        }
       }
     } catch (error) {
       console.log('Login error', error);
@@ -169,7 +176,10 @@ const Login = () => {
             <p className="text-sm text-on-surface-variant">
               Don't have an account?{' '}
               <Link
-                to="/register"
+                to={redirect
+                  ? `/register?redirect=${encodeURIComponent(redirect)}`
+                  : '/register'
+                }
                 className="font-semibold text-primary hover:text-primary-fixed-dim transition-colors ml-1"
               >
                 Sign up

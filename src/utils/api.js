@@ -48,4 +48,8 @@ export const CollaboratorAPI = {
   removeCollaborator: async (documentId, collaboratorId) => await axiosInstance.delete(`/v1/documents/${documentId}/collaborators/${collaboratorId}`),
 
   updateCollaboratorRole: async (documentId, collaboratorId, data) => await axiosInstance.patch(`/v1/documents/${documentId}/collaborators/${collaboratorId}`, data),
+
+  validateInvitation: async (token) => await axiosInstance.get(`/v1/documents/invite-validate/${token}`),
+
+  acceptInvitation: async (token) => await axiosInstance.post(`/v1/documents/collaborators/accept/${token}`),
 }

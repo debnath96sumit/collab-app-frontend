@@ -1,16 +1,3 @@
-/**
- * PresenceAvatars — overlapping avatar circles
- *
- * Props:
- * - presence: array of { userId, username } from socket presenceUpdated event
- *
- * Implementation notes:
- * - Show max 3 avatars, then "+N more" circle for the rest
- * - Each avatar shows first letter of username
- * - Color is deterministic based on userId (use COLORS array like your existing code)
- * - Add a tooltip (title attr) showing the full username on hover
- */
-
 import { getInitials } from "../../helpers";
 
 const COLORS = [
@@ -41,18 +28,18 @@ const PresenceAvatars = ({ presence = [] }) => {
         <div className="flex items-center -space-x-2">
             {visible.map((doc) => (
                 <div
-                    key={doc?.user?.id}
-                    title={doc?.user?.username}
-                    className={`w-8 h-8 rounded-full border-2 border-slate-900 flex items-center justify-center text-[11px] font-bold text-white overflow-hidden ${!doc?.user?.avatarUrl ? getColor(doc?.user?.id) : ''}`}
+                    key={doc?.userId}
+                    title={doc?.username}
+                    className={`w-8 h-8 rounded-full border-2 border-slate-900 flex items-center justify-center text-[11px] font-bold text-white overflow-hidden ${!doc?.avatarUrl ? getColor(doc?.userId) : ''}`}
                 >
-                    {doc?.user?.avatarUrl ? (
+                    {doc?.avatarUrl ? (
                         <img
-                            src={doc.user.avatarUrl}
-                            alt={doc?.user?.username}
+                            src={doc.avatarUrl}
+                            alt={doc?.username}
                             className="w-full h-full object-cover"
                         />
                     ) : (
-                        getInitials(doc?.user?.fullName)
+                        getInitials(doc?.fullName || doc?.username)
                     )}
                 </div>
             ))}

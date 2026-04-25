@@ -34,7 +34,7 @@ const EditorHeader = ({
                     <span className="text-slate-600">/</span>
                     <input
                         type="text"
-                        value={title}
+                        value={title || ''}
                         onChange={(e) => onTitleChange(e.target.value)}
                         placeholder="Untitled Document"
                         className="bg-transparent border-none focus:ring-0 text-slate-200 font-semibold text-base p-1 w-64 outline-none focus:bg-slate-800/40 rounded-lg transition-colors placeholder:text-slate-600"

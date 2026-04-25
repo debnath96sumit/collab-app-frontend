@@ -81,7 +81,8 @@ const ShareModal = ({ document, onClose }) => {
                 email: inviteEmail,
                 role: inviteRole,
             });
-            setCollaborators((prev) => [...prev, response.data.data]);
+
+            setCollaborators((prev) => [...prev, response.data]);
             setInviteEmail('');
         } catch (error) {
             console.log(error);
@@ -202,7 +203,7 @@ const ShareModal = ({ document, onClose }) => {
                         People with access
                     </h3>
 
-                    <div className="space-y-1">
+                    <div className="space-y-1 max-h-[200px] overflow-y-auto">
                         {/*
              * TODO: map over collaborators array
              * Each item shows avatar (initials), username, email, role badge

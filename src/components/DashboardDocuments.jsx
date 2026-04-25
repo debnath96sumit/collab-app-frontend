@@ -57,7 +57,6 @@ const DocumentDashboard = () => {
 
     try {
       const data = await DocumentAPI.createDocument({ title: newDocTitle });
-      console.log('ssssssssss', data);
 
       setMyDocuments([...myDocuments, data.data]);
       setShowCreateModal(false);

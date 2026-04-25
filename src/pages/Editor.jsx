@@ -28,6 +28,7 @@ const Editor = () => {
     const [showShareModal, setShowShareModal] = useState(false);
     const [activeCollaborators, setActiveCollaborators] = useState([]);
     const [pendingCollaborators, setPendingCollaborators] = useState([]);
+    const [onlineUsers, setOnlineUsers] = useState([]);
 
     useEffect(() => {
         const token = localStorage.getItem('access_token');
@@ -62,6 +63,27 @@ const Editor = () => {
             setIsConnected(false);
         });
 
+        socketInstance.on('documentUpdated', (data) => {
+            setDocument(prev => ({ ...prev, content: data.content }));
+        });
+
+        socketInstance.on('documentRenamed', (data) => {
+            const updatedTitle = data.title || data.name || data.newTitle;
+            if (updatedTitle) {
+                setDocument(prev => ({ ...prev, title: updatedTitle }));
+            }
+        });
+
+        socketInstance.on('presenceUpdated', (users) => {
+            setOnlineUsers(users);
+        });
+
+        socketInstance.on('joined', (data) => {
+            if (data && data.presence) {
+                setOnlineUsers(data.presence);
+            }
+        });
+
         return () => {
             socketInstance.disconnect();
         };
@@ -91,7 +113,7 @@ const Editor = () => {
         setDocument(prev => ({ ...prev, title: newTitle }));
         setSaveStatus('saving');
 
-        debouncedEmit('renameDocument', { docId: document.id, name: newTitle });
+        debouncedEmit('renameDocument', { docId: document.id, newTitle });
     };
 
     return (
@@ -100,7 +122,7 @@ const Editor = () => {
                 title={document.title}
                 onTitleChange={handleTitleChange}
                 saveStatus={saveStatus}
-                presence={activeCollaborators}
+                presence={onlineUsers}
                 isConnected={isConnected}
                 onShare={() => setShowShareModal(true)}
                 onToggleCollabPanel={() => setIsCollabPanelOpen(prev => !prev)}
