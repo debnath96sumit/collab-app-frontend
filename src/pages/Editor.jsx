@@ -6,7 +6,7 @@ import EditorCanvas from '../components/editor/EditorCanvas';
 import CollabPanel from '../components/editor/CollabPanel';
 import { useAuth } from '../context/AuthContext';
 import { useParams } from "react-router-dom";
-import { DocumentAPI } from '../utils/api';
+import { CollaboratorAPI, DocumentAPI } from '../utils/api';
 import io from 'socket.io-client';
 import ShareModal from '../components/ShareModal';
 import { debounce } from 'lodash';
@@ -16,7 +16,7 @@ const Editor = () => {
     const { id } = useParams();
     const [saveStatus, setSaveStatus] = useState('saved');
     const [isConnected, setIsConnected] = useState(false);
-
+    const [isCollabPanelOpen, setIsCollabPanelOpen] = useState(true);
     const [document, setDocument] = useState({
         id: null,
         title: '',
@@ -26,6 +26,9 @@ const Editor = () => {
     const [socket, setSocket] = useState(null);
 
     const [showShareModal, setShowShareModal] = useState(false);
+    const [activeCollaborators, setActiveCollaborators] = useState([]);
+    const [pendingCollaborators, setPendingCollaborators] = useState([]);
+
     useEffect(() => {
         const token = localStorage.getItem('access_token');
         const socketInstance = io(`${import.meta.env.VITE_API_URL}/document-edits`, {
@@ -41,8 +44,12 @@ const Editor = () => {
 
             try {
                 const response = await DocumentAPI.getDocument(id);
-                setDocument(response.data);
-                console.log(response.data);
+                if (response.data) {
+                    setDocument(response.data);
+                    const collaborator_resp = await CollaboratorAPI.getAllCollaborators(id);
+                    setActiveCollaborators(collaborator_resp.data.active);
+                    setPendingCollaborators(collaborator_resp.data.pending);
+                }
 
                 socketInstance.emit('joinDocument', id);
             } catch (error) {
@@ -93,9 +100,10 @@ const Editor = () => {
                 title={document.title}
                 onTitleChange={handleTitleChange}
                 saveStatus={saveStatus}
-                presence={document.collaborators}
+                presence={activeCollaborators}
                 isConnected={isConnected}
                 onShare={() => setShowShareModal(true)}
+                onToggleCollabPanel={() => setIsCollabPanelOpen(prev => !prev)}
             />
 
             <div className="flex flex-1 overflow-hidden">
@@ -113,10 +121,11 @@ const Editor = () => {
                 </main>
 
                 <CollabPanel
-                    collaborators={document.collaborators}
-                    presence={document.collaborators}
-                    isOpen={true}
-                    onClose={() => { }}
+                    activeCollaborators={activeCollaborators}
+                    pendingCollaborators={pendingCollaborators}
+                    presence={activeCollaborators}
+                    isOpen={isCollabPanelOpen}
+                    onClose={() => setIsCollabPanelOpen(false)}
                 />
             </div>
             {showShareModal && (

@@ -43,7 +43,7 @@ export const DocumentAPI = {
 export const CollaboratorAPI = {
   invite: async (documentId, data) => await axiosInstance.post(`/v1/documents/${documentId}/add-collaborators`, data),
 
-  getAllCollaborators: async (documentId) => await axiosInstance.get(`/v1/documents/${documentId}/collaborators`),
+  getAllCollaborators: async (documentId) => await axiosInstance.get(`/v1/documents/${documentId}/get-collaborators`),
 
   removeCollaborator: async (documentId, collaboratorId) => await axiosInstance.delete(`/v1/documents/${documentId}/collaborators/${collaboratorId}`),
 

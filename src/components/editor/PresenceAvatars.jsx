@@ -11,6 +11,8 @@
  * - Add a tooltip (title attr) showing the full username on hover
  */
 
+import { getInitials } from "../../helpers";
+
 const COLORS = [
     'bg-blue-500',
     'bg-emerald-500',
@@ -21,14 +23,15 @@ const COLORS = [
 ];
 
 const getColor = (userId) => {
-    // TODO: derive index from userId to pick a consistent color
-    // hint: use charCodeAt(0) % COLORS.length like your existing getUserColor
-    const index = userId?.charCodeAt(0) % COLORS.length || 0;
-    return COLORS[index];
+    if (!userId) return COLORS[0];
+    let hash = 0;
+    for (let i = 0; i < userId.length; i++) {
+        hash = (hash + userId.charCodeAt(i)) * 31;
+    }
+    return COLORS[Math.abs(hash) % COLORS.length];
 };
 
 const PresenceAvatars = ({ presence = [] }) => {
-    // TODO: slice presence to max 3 visible, calculate remainder
     const visible = presence.slice(0, 3);
     const remaining = presence.length - visible.length;
 
@@ -36,21 +39,24 @@ const PresenceAvatars = ({ presence = [] }) => {
 
     return (
         <div className="flex items-center -space-x-2">
-            {visible.map((user) => (
+            {visible.map((doc) => (
                 <div
-                    key={user.userId}
-                    title={user.username}
-                    className={`w-8 h-8 rounded-full border-2 border-slate-900 flex items-center justify-center text-[11px] font-bold text-white ${getColor(user.userId)}`}
+                    key={doc?.user?.id}
+                    title={doc?.user?.username}
+                    className={`w-8 h-8 rounded-full border-2 border-slate-900 flex items-center justify-center text-[11px] font-bold text-white overflow-hidden ${!doc?.user?.avatarUrl ? getColor(doc?.user?.id) : ''}`}
                 >
-                    {/*
-           * TODO: show first letter of username
-           * hint: user.username?.[0]?.toUpperCase()
-           */}
-                    {user.username?.[0]?.toUpperCase()}
+                    {doc?.user?.avatarUrl ? (
+                        <img
+                            src={doc.user.avatarUrl}
+                            alt={doc?.user?.username}
+                            className="w-full h-full object-cover"
+                        />
+                    ) : (
+                        getInitials(doc?.user?.fullName)
+                    )}
                 </div>
             ))}
 
-            {/* "+N more" bubble */}
             {remaining > 0 && (
                 <div className="w-8 h-8 rounded-full border-2 border-slate-900 bg-surface-variant flex items-center justify-center text-[10px] font-bold text-on-surface-variant">
                     +{remaining}

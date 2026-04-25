@@ -1,20 +1,8 @@
-import { ArrowLeft, Share2, Bell, Settings } from 'lucide-react';
+import { ArrowLeft, Share2, Bell, Settings, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import PresenceAvatars from './PresenceAvatars';
 import SaveStatus from './SaveStatus';
 
-/**
- * EditorHeader — top bar of the editor page
- *
- * Props:
- * - title: string — current document title
- * - onTitleChange: fn — called with new title string on input change
- * - onTitleBlur: fn — called when title input loses focus (good place to emit renameDocument)
- * - saveStatus: 'saving' | 'saved' | 'error'
- * - presence: array of { userId, username } — users currently in the document room
- * - isConnected: boolean — socket connection status
- * - onShare: fn — opens share modal
- */
 const EditorHeader = ({
     title,
     onTitleChange,
@@ -22,6 +10,7 @@ const EditorHeader = ({
     presence,
     isConnected,
     onShare,
+    onToggleCollabPanel,
 }) => {
     const navigate = useNavigate();
 
@@ -43,14 +32,6 @@ const EditorHeader = ({
                         CollabDocs
                     </span>
                     <span className="text-slate-600">/</span>
-
-                    {/*
-           * Title input — inline editable
-           * - value comes from document.title in Editor.jsx
-           * - onChange calls onTitleChange (updates local state only)
-           * - onBlur calls onTitleBlur (emits renameDocument to socket)
-           * This way we don't emit on every keystroke, only when user finishes editing
-           */}
                     <input
                         type="text"
                         value={title}
@@ -61,28 +42,12 @@ const EditorHeader = ({
                 </div>
             </div>
 
-            {/* ── Center: presence avatars + save status ── */}
             <div className="flex items-center justify-center gap-4 flex-1">
-                {/*
-         * PresenceAvatars — renders overlapping circles for each user in the room
-         * presence array comes from socket 'presenceUpdated' event in Editor.jsx
-         */}
                 <PresenceAvatars presence={presence} />
-
-                {/*
-         * SaveStatus — shows saving/saved/error indicator
-         * saveStatus is set to 'saving' on every content change
-         * and back to 'saved' after debouncedEmit fires
-         */}
                 <SaveStatus status={saveStatus} />
             </div>
 
-            {/* ── Right: share button + actions ── */}
             <div className="flex items-center justify-end gap-2 flex-1">
-                {/*
-         * Connection indicator — small dot showing socket status
-         * isConnected comes from socket 'connect'/'disconnect' events
-         */}
                 <div className="flex items-center gap-1.5 mr-2">
                     <div
                         className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-400' : 'bg-red-400'
@@ -93,10 +58,6 @@ const EditorHeader = ({
                     </span>
                 </div>
 
-                {/*
-         * Share button — opens ShareModal
-         * onShare sets showShareModal(true) in Editor.jsx
-         */}
                 <button
                     onClick={onShare}
                     className="bg-primary-container text-on-primary-container px-5 py-2 rounded-lg font-bold text-sm hover:bg-blue-600 transition-colors active:scale-95"
@@ -107,12 +68,16 @@ const EditorHeader = ({
                     </span>
                 </button>
 
-                <button className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 rounded-lg transition-colors active:scale-95">
-                    <Bell size={16} />
+                <button
+                    onClick={onToggleCollabPanel}
+                    className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 rounded-lg transition-colors active:scale-95"
+                    title="Toggle collaborators panel"
+                >
+                    <Users size={16} />
                 </button>
 
                 <button className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 rounded-lg transition-colors active:scale-95">
-                    <Settings size={16} />
+                    <Bell size={16} />
                 </button>
             </div>
         </header>
