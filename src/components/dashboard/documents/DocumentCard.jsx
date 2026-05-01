@@ -24,12 +24,12 @@ const DocumentCard = ({ doc, role = 'owner', onOpen, onRename, onDelete }) => {
     const isOwner = user?.id === doc.owner_id;
     return (
         <div
-            className="group relative bg-surface-container-low hover:bg-surface-bright rounded-xl transition-all duration-300 cursor-pointer overflow-hidden flex flex-col h-64 shadow-sm shadow-primary/5"
+            className="group relative bg-surface-container-low hover:bg-surface-bright rounded-xl transition-all duration-300 cursor-pointer flex flex-col h-64 shadow-sm shadow-primary/5"
         >
             {/* Top preview area */}
             <div
                 onClick={() => onOpen(doc)}
-                className={`h-32 w-full bg-surface-container-highest overflow-hidden`}
+                className={`h-32 w-full bg-surface-container-highest overflow-hidden rounded-t-xl`}
             >
                 <div
                     className={`w-full h-full bg-gradient-to-br ${cardAccentStyles[role]} to-transparent flex items-center justify-center opacity-40 group-hover:opacity-60 transition-opacity`}
@@ -73,6 +73,7 @@ const DocumentCard = ({ doc, role = 'owner', onOpen, onRename, onDelete }) => {
                                     onDelete(doc);
                                 }}
                                 onClose={() => setMenuOpen(false)}
+                                onOpen={onOpen}
                             />
                         )}
                     </div>

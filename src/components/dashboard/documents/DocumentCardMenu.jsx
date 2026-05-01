@@ -1,6 +1,6 @@
 import { Edit, Trash2, ExternalLink } from 'lucide-react';
 
-const DocumentCardMenu = ({ doc, role, onRename, onDelete, onClose }) => {
+const DocumentCardMenu = ({ doc, role, onRename, onDelete, onClose, onOpen }) => {
     return (
         <>
             {/* Backdrop */}
@@ -15,7 +15,7 @@ const DocumentCardMenu = ({ doc, role, onRename, onDelete, onClose }) => {
                     onClick={(e) => {
                         e.stopPropagation();
                         onClose();
-                        // open document
+                        onOpen(doc);
                     }}
                     className="w-full px-4 py-2.5 flex items-center gap-3 text-sm text-on-surface hover:bg-surface-bright transition-colors"
                 >
@@ -36,7 +36,7 @@ const DocumentCardMenu = ({ doc, role, onRename, onDelete, onClose }) => {
                     </button>
                 )}
 
-                {role === 'owner' && (
+                {(role === 'owner') && (
                     <button
                         onClick={(e) => {
                             e.stopPropagation();

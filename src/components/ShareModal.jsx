@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { X, Link, Copy, ChevronDown, Check } from 'lucide-react';
 import { CollaboratorAPI, DocumentAPI } from '../utils/api';
 import ModalWrapper from '../components/dashboard/modals/ModalWrapper';
+import { pushToast } from '../utils/toaster';
 
 const roleBadgeStyles = {
     owner: 'bg-primary-container/20 text-primary',
@@ -25,44 +26,21 @@ const roleOptions = ['editor', 'commenter', 'viewer'];
  * 2. People with access → GET /documents/:id/collaborators (already on document)
  * 3. General access → PATCH /documents/:id/link-settings
  */
-const ShareModal = ({ document, onClose }) => {
+const ShareModal = ({ document, onClose, activeCollaborators }) => {
     // ── Invite section state ─────────────────────────────────────────────────
     const [inviteEmail, setInviteEmail] = useState('');
     const [inviteRole, setInviteRole] = useState('editor');
     const [inviteLoading, setInviteLoading] = useState(false);
     const [inviteError, setInviteError] = useState('');
 
-    // ── Link settings state ──────────────────────────────────────────────────
     const [linkAccess, setLinkAccess] = useState(document?.linkAccess ?? 'restricted');
     const [linkPermission, setLinkPermission] = useState(document?.linkPermission ?? 'viewer');
     const [linkSettingsLoading, setLinkSettingsLoading] = useState(false);
     const [showLinkDropdown, setShowLinkDropdown] = useState(false);
-
-    // ── Copy link state ──────────────────────────────────────────────────────
     const [copied, setCopied] = useState(false);
-
-    // ── Collaborators local state ────────────────────────────────────────────
-    /*
-     * Start with collaborators from the document prop
-     * When invite succeeds, append the new collaborator to this list
-     * so UI updates immediately without refetching
-     */
     const [collaborators, setCollaborators] = useState(
-        document?.collaborators ?? [],
+        activeCollaborators ?? [],
     );
-
-    // ── Handlers ─────────────────────────────────────────────────────────────
-
-    /**
-     * handleInvite — sends invite to POST /documents/:id/collaborators
-     *
-     * TODO:
-     * 1. Validate inviteEmail is not empty
-     * 2. Call CollaboratorAPI.invite(document.id, { email: inviteEmail, role: inviteRole })
-     * 3. On success → append new collaborator to local collaborators state
-     * 4. Clear inviteEmail input
-     * 5. On error → set inviteError message
-     */
     const handleInvite = async () => {
         if (!inviteEmail.trim()) return;
         setInviteError('');
@@ -73,9 +51,12 @@ const ShareModal = ({ document, onClose }) => {
                 email: inviteEmail,
                 role: inviteRole,
             });
-
-            setCollaborators((prev) => [...prev, response.data]);
-            setInviteEmail('');
+            if (response.statusCode === 201) {
+                setInviteEmail('');
+                pushToast(response.message, "success");
+            } else {
+                pushToast(response.message, "error");
+            }
         } catch (error) {
             console.log(error);
             setInviteError(error?.response?.data?.message ?? 'Failed to send invite');
@@ -84,14 +65,7 @@ const ShareModal = ({ document, onClose }) => {
         }
     };
 
-    /**
-     * handleCopyLink — copies share link to clipboard
-     *
-     * TODO:
-     * - Build the share URL using document.shareToken
-     * - navigator.clipboard.writeText(shareUrl)
-     * - Set copied to true, reset after 2 seconds
-     */
+
     const handleCopyLink = async () => {
         const shareUrl = `${window.location.origin}/document/shared/${document?.shareToken}`;
         await navigator.clipboard.writeText(shareUrl);
@@ -99,25 +73,22 @@ const ShareModal = ({ document, onClose }) => {
         setTimeout(() => setCopied(false), 2000);
     };
 
-    /**
-     * handleLinkSettingsChange — updates linkAccess + linkPermission
-     *
-     * TODO:
-     * - Call DocumentAPI.updateLinkSettings(document.id, { linkAccess, linkPermission })
-     * - This maps to PATCH /documents/:id/link-settings
-     * - Call after user changes the dropdown selection
-     */
     const handleLinkSettingsChange = async (newAccess) => {
         setLinkAccess(newAccess);
         setShowLinkDropdown(false);
         setLinkSettingsLoading(true);
 
         try {
-            // TODO: replace with your actual API call
-            // await DocumentAPI.updateLinkSettings(document.id, {
-            //   linkAccess: newAccess,
-            //   linkPermission,
-            // });
+            const response = await CollaboratorAPI.updateDocSettings(document.id, {
+                linkAccess: newAccess,
+                linkPermission,
+            });
+
+            if (response.statusCode === 200) {
+                pushToast(response.message, "success");
+            } else {
+                pushToast(response.message, "error");
+            }
         } catch (error) {
             console.error('Failed to update link settings:', error);
         } finally {
@@ -128,10 +99,16 @@ const ShareModal = ({ document, onClose }) => {
     const handleLinkPermissionChange = async (newPermission) => {
         setLinkPermission(newPermission);
         try {
-            await DocumentAPI.updateDocSettings(document.id, {
+            const response = await CollaboratorAPI.updateDocSettings(document.id, {
                 linkAccess,
                 linkPermission: newPermission,
             });
+
+            if (response.statusCode === 200) {
+                pushToast(response.message, "success");
+            } else {
+                pushToast(response.message, "error");
+            }
         } catch (error) {
             console.error('Failed to update link permission:', error);
         }
@@ -139,20 +116,35 @@ const ShareModal = ({ document, onClose }) => {
 
     const handleRoleChange = async (collabId, newRole) => {
         try {
-            await CollaboratorAPI.updateCollaboratorRole(document.id, collabId, { role: newRole });
-            setCollaborators((prev) =>
-                prev.map((c) => (c.id === collabId ? { ...c, role: newRole } : c)),
-            );
+            const response = await CollaboratorAPI.updateCollaboratorRole(document.id, collabId, { role: newRole });
+
+            if (response.statusCode === 200) {
+                setCollaborators((prev) =>
+                    prev.map((c) => (c.id === collabId ? { ...c, role: newRole } : c)),
+                );
+
+                pushToast(response.message, "success");
+            } else {
+                pushToast(response.message, "error");
+            }
         } catch (error) {
             console.error('Failed to update role:', error);
+            pushToast(error.message, "error");
         }
     };
     const handleRemoveCollaborator = async (collabId) => {
         try {
-            // TODO: await CollaboratorAPI.remove(document.id, collabId);
-            setCollaborators((prev) => prev.filter((c) => c.id !== collabId));
+            const response = await CollaboratorAPI.removeCollaborator(document.id, collabId);
+
+            if (response.statusCode === 200) {
+                setCollaborators((prev) => prev.filter((c) => c.id !== collabId));
+                pushToast(response.message, "success");
+            } else {
+                pushToast(response.message, "error");
+            }
         } catch (error) {
             console.error('Failed to remove collaborator:', error);
+            pushToast(error.message, "error");
         }
     };
 
@@ -242,8 +234,6 @@ const ShareModal = ({ document, onClose }) => {
                             </p>
                         ) : (
                             collaborators.map((collab) => {
-                                const isPending = collab.status === 'pending';
-                                const displayRole = isPending ? 'pending' : collab.role;
                                 const username = collab.user?.username ?? collab.invitedEmail;
                                 const email = collab.invitedEmail ?? collab.user?.email;
                                 const initial = username?.[0]?.toUpperCase() ?? '?';
@@ -256,16 +246,19 @@ const ShareModal = ({ document, onClose }) => {
                                     >
                                         <div className="flex items-center gap-3">
                                             <div className="w-9 h-9 rounded-full bg-primary-container flex items-center justify-center text-sm font-bold text-on-primary-container flex-shrink-0">
-                                                {initial}
+                                                {collab.user?.avatarUrl ? (
+                                                    <img
+                                                        src={collab.user.avatarUrl}
+                                                        alt={username}
+                                                        className="w-full h-full rounded-full object-cover"
+                                                    />
+                                                ) : (
+                                                    initial
+                                                )}
                                             </div>
                                             <div className="min-w-0">
                                                 <p className="text-sm font-semibold text-on-surface truncate">
                                                     {username}
-                                                    {isPending && (
-                                                        <span className="ml-2 text-xs text-on-surface-variant font-normal">
-                                                            (invite pending)
-                                                        </span>
-                                                    )}
                                                 </p>
                                                 <p className="text-xs text-on-surface-variant truncate">{email}</p>
                                             </div>
@@ -277,22 +270,7 @@ const ShareModal = ({ document, onClose }) => {
                                                 <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase ${roleBadgeStyles.owner}`}>
                                                     Owner
                                                 </span>
-                                            ) : isPending ? (
-                                                /* Pending — static badge + cancel invite */
-                                                <>
-                                                    <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase ${roleBadgeStyles.pending}`}>
-                                                        Pending
-                                                    </span>
-                                                    <button
-                                                        onClick={() => handleRemoveCollaborator(collab.id)}
-                                                        className="opacity-0 group-hover:opacity-100 p-1 hover:bg-error/10 rounded-lg transition-all"
-                                                        title="Cancel invite"
-                                                    >
-                                                        <X size={14} className="text-error" />
-                                                    </button>
-                                                </>
                                             ) : (
-                                                /* Active collaborator — role dropdown + remove */
                                                 <>
                                                     <select
                                                         value={collab.role}
@@ -325,8 +303,6 @@ const ShareModal = ({ document, onClose }) => {
                     </div>
                 </section>
 
-                {/* ── Section 3: General access (link settings) ── */}
-                {/* ── Section 3: General access ── */}
                 <section className="pt-4 border-t border-outline-variant/10">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
@@ -370,14 +346,6 @@ const ShareModal = ({ document, onClose }) => {
                                 )}
                             </div>
                         </div>
-
-                        <button
-                            onClick={handleCopyLink}
-                            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-primary/20 text-primary text-sm font-bold hover:bg-primary/5 transition-all active:scale-95"
-                        >
-                            {copied ? <Check size={16} /> : <Copy size={16} />}
-                            {copied ? 'Copied!' : 'Copy Link'}
-                        </button>
                     </div>
 
                     {/* Link permission — only shown when public */}
@@ -404,7 +372,7 @@ const ShareModal = ({ document, onClose }) => {
                         <input
                             readOnly
                             value={shareUrl}
-                            className="bg-transparent border-none text-xs text-outline w-full focus:ring-0 outline-none cursor-text select-all"
+                            className="bg-transparent border-none text-xs text-outline w-full focus:ring-0 outline-none cursor-text select-all "
                         />
                     </div>
                 </section>
@@ -412,11 +380,12 @@ const ShareModal = ({ document, onClose }) => {
 
             {/* ── Footer ── */}
             <div className="mt-6 pt-4 border-t border-outline-variant/10 flex items-center justify-between flex-shrink-0">
-                <p className="text-[10px] text-on-surface-variant">
-                    Link expires in 30 days
-                </p>
-                <button className="text-xs font-bold text-on-surface-variant hover:text-on-surface transition-colors">
-                    Manage Link Permissions
+                <button
+                    onClick={handleCopyLink}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-primary/20 text-primary text-sm font-bold hover:bg-primary/5 transition-all active:scale-95"
+                >
+                    {copied ? <Check size={16} /> : <Copy size={16} />}
+                    {copied ? 'Copied!' : 'Copy Link'}
                 </button>
             </div>
         </ModalWrapper>

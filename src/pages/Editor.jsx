@@ -168,6 +168,7 @@ const Editor = () => {
             {showShareModal && (
                 <ShareModal
                     document={document}
+                    activeCollaborators={activeCollaborators}
                     onClose={() => setShowShareModal(false)}
                 />
             )}
