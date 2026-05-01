@@ -1,12 +1,8 @@
 import { useState } from 'react';
 import { X, Link, Copy, ChevronDown, Check } from 'lucide-react';
-import { CollaboratorAPI } from '../utils/api';
+import { CollaboratorAPI, DocumentAPI } from '../utils/api';
 import ModalWrapper from '../components/dashboard/modals/ModalWrapper';
 
-/**
- * Role badge styles — same pattern as CollabPanel
- * Used for the "people with access" list
- */
 const roleBadgeStyles = {
     owner: 'bg-primary-container/20 text-primary',
     editor: 'bg-emerald-900/40 text-emerald-400',
@@ -15,10 +11,6 @@ const roleBadgeStyles = {
     pending: 'bg-amber-900/40 text-amber-400',
 };
 
-/**
- * InvitableRole options for the dropdown
- * OWNER is excluded — you can't invite someone as owner
- */
 const roleOptions = ['editor', 'commenter', 'viewer'];
 
 /**
@@ -101,7 +93,7 @@ const ShareModal = ({ document, onClose }) => {
      * - Set copied to true, reset after 2 seconds
      */
     const handleCopyLink = async () => {
-        const shareUrl = `${window.location.origin}/documents/shared/${document?.shareToken}`;
+        const shareUrl = `${window.location.origin}/document/shared/${document?.shareToken}`;
         await navigator.clipboard.writeText(shareUrl);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
@@ -133,12 +125,43 @@ const ShareModal = ({ document, onClose }) => {
         }
     };
 
+    const handleLinkPermissionChange = async (newPermission) => {
+        setLinkPermission(newPermission);
+        try {
+            await DocumentAPI.updateDocSettings(document.id, {
+                linkAccess,
+                linkPermission: newPermission,
+            });
+        } catch (error) {
+            console.error('Failed to update link permission:', error);
+        }
+    };
+
+    const handleRoleChange = async (collabId, newRole) => {
+        try {
+            await CollaboratorAPI.updateCollaboratorRole(document.id, collabId, { role: newRole });
+            setCollaborators((prev) =>
+                prev.map((c) => (c.id === collabId ? { ...c, role: newRole } : c)),
+            );
+        } catch (error) {
+            console.error('Failed to update role:', error);
+        }
+    };
+    const handleRemoveCollaborator = async (collabId) => {
+        try {
+            // TODO: await CollaboratorAPI.remove(document.id, collabId);
+            setCollaborators((prev) => prev.filter((c) => c.id !== collabId));
+        } catch (error) {
+            console.error('Failed to remove collaborator:', error);
+        }
+    };
+
     const shareUrl = `${window.location.origin}/documents/shared/${document?.shareToken}`;
 
     return (
         <ModalWrapper onClose={onClose}>
             {/* ── Header ── */}
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-6 flex-shrink-0">
                 <h2 className="text-xl font-headline font-bold text-on-surface">
                     Share Document
                 </h2>
@@ -150,7 +173,7 @@ const ShareModal = ({ document, onClose }) => {
                 </button>
             </div>
 
-            <div className="space-y-8">
+            <div className="space-y-8 flex-1 overflow-y-auto min-h-0 custom-scrollbar">
                 {/* ── Section 1: Invite people ── */}
                 <section>
                     <label className="block text-sm font-medium text-on-surface-variant mb-3">
@@ -203,7 +226,7 @@ const ShareModal = ({ document, onClose }) => {
                         People with access
                     </h3>
 
-                    <div className="space-y-1 max-h-[200px] overflow-y-auto">
+                    <div className="space-y-1">
                         {/*
              * TODO: map over collaborators array
              * Each item shows avatar (initials), username, email, role badge
@@ -224,6 +247,7 @@ const ShareModal = ({ document, onClose }) => {
                                 const username = collab.user?.username ?? collab.invitedEmail;
                                 const email = collab.invitedEmail ?? collab.user?.email;
                                 const initial = username?.[0]?.toUpperCase() ?? '?';
+                                const isOwner = collab.role === 'owner';
 
                                 return (
                                     <div
@@ -231,12 +255,11 @@ const ShareModal = ({ document, onClose }) => {
                                         className="flex items-center justify-between p-3 rounded-xl hover:bg-surface-bright transition-colors group"
                                     >
                                         <div className="flex items-center gap-3">
-                                            {/* Avatar */}
                                             <div className="w-9 h-9 rounded-full bg-primary-container flex items-center justify-center text-sm font-bold text-on-primary-container flex-shrink-0">
                                                 {initial}
                                             </div>
-                                            <div>
-                                                <p className="text-sm font-semibold text-on-surface">
+                                            <div className="min-w-0">
+                                                <p className="text-sm font-semibold text-on-surface truncate">
                                                     {username}
                                                     {isPending && (
                                                         <span className="ml-2 text-xs text-on-surface-variant font-normal">
@@ -244,26 +267,55 @@ const ShareModal = ({ document, onClose }) => {
                                                         </span>
                                                     )}
                                                 </p>
-                                                <p className="text-xs text-on-surface-variant">{email}</p>
+                                                <p className="text-xs text-on-surface-variant truncate">{email}</p>
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-2">
-                                            <span
-                                                className={`px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase ${roleBadgeStyles[displayRole] ?? roleBadgeStyles.viewer}`}
-                                            >
-                                                {displayRole}
-                                            </span>
-
-                                            {/*
-                       * TODO: remove button — only show for non-owner collaborators
-                       * onClick → CollaboratorAPI.remove(document.id, collab.id)
-                       * On success → filter collab out of local collaborators state
-                       */}
-                                            {collab.role !== 'owner' && (
-                                                <button className="opacity-0 group-hover:opacity-100 p-1 hover:bg-error/10 rounded-lg transition-all">
-                                                    <X size={14} className="text-error" />
-                                                </button>
+                                        <div className="flex items-center gap-2 flex-shrink-0">
+                                            {isOwner ? (
+                                                /* Owner — static badge, no actions */
+                                                <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase ${roleBadgeStyles.owner}`}>
+                                                    Owner
+                                                </span>
+                                            ) : isPending ? (
+                                                /* Pending — static badge + cancel invite */
+                                                <>
+                                                    <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase ${roleBadgeStyles.pending}`}>
+                                                        Pending
+                                                    </span>
+                                                    <button
+                                                        onClick={() => handleRemoveCollaborator(collab.id)}
+                                                        className="opacity-0 group-hover:opacity-100 p-1 hover:bg-error/10 rounded-lg transition-all"
+                                                        title="Cancel invite"
+                                                    >
+                                                        <X size={14} className="text-error" />
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                /* Active collaborator — role dropdown + remove */
+                                                <>
+                                                    <select
+                                                        value={collab.role}
+                                                        onChange={(e) => handleRoleChange(collab.id, e.target.value)}
+                                                        className="opacity-0 group-hover:opacity-100 bg-surface-container-high border border-outline-variant/20 rounded-lg px-2 py-1 text-on-surface text-xs outline-none cursor-pointer transition-all w-28"
+                                                    >
+                                                        {roleOptions.map((role) => (
+                                                            <option key={role} value={role} className="capitalize">
+                                                                {role.charAt(0).toUpperCase() + role.slice(1)}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                    <span className={`group-hover:hidden px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase ${roleBadgeStyles[collab.role] ?? roleBadgeStyles.viewer}`}>
+                                                        {collab.role}
+                                                    </span>
+                                                    <button
+                                                        onClick={() => handleRemoveCollaborator(collab.id)}
+                                                        className="opacity-0 group-hover:opacity-100 p-1 hover:bg-error/10 rounded-lg transition-all"
+                                                        title="Remove collaborator"
+                                                    >
+                                                        <X size={14} className="text-error" />
+                                                    </button>
+                                                </>
                                             )}
                                         </div>
                                     </div>
@@ -274,65 +326,51 @@ const ShareModal = ({ document, onClose }) => {
                 </section>
 
                 {/* ── Section 3: General access (link settings) ── */}
+                {/* ── Section 3: General access ── */}
                 <section className="pt-4 border-t border-outline-variant/10">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center flex-shrink-0">
                                 <Link size={18} className="text-on-surface-variant" />
                             </div>
+                            <div className="relative">
+                                <h4 className="text-sm font-semibold text-on-surface">General Access</h4>
+                                <button
+                                    onClick={() => setShowLinkDropdown((prev) => !prev)}
+                                    className="flex items-center gap-1 text-xs text-on-surface-variant hover:text-primary transition-colors"
+                                >
+                                    <span>
+                                        {linkAccess === 'public'
+                                            ? 'Anyone with the link can access'
+                                            : 'Restricted — only invited people'}
+                                    </span>
+                                    <ChevronDown size={12} />
+                                </button>
 
-                            <div>
-                                <h4 className="text-sm font-semibold text-on-surface">
-                                    General Access
-                                </h4>
-
-                                {/*
-                 * TODO: clicking this should toggle showLinkDropdown
-                 * Dropdown shows: Restricted, Anyone with link
-                 * Selecting calls handleLinkSettingsChange(newAccess)
-                 */}
-                                <div className="relative">
-                                    <button
-                                        onClick={() => setShowLinkDropdown((prev) => !prev)}
-                                        className="flex items-center gap-1 text-xs text-on-surface-variant hover:text-primary transition-colors"
-                                    >
-                                        <span>
-                                            {linkAccess === 'public'
-                                                ? 'Anyone with the link can access'
-                                                : 'Restricted — only invited people'}
-                                        </span>
-                                        <ChevronDown size={12} />
-                                    </button>
-
-                                    {showLinkDropdown && (
-                                        <>
-                                            <div
-                                                className="fixed inset-0 z-10"
-                                                onClick={() => setShowLinkDropdown(false)}
-                                            />
-                                            <div className="absolute left-0 top-6 z-20 w-56 bg-surface-container-high border border-outline-variant/20 rounded-xl shadow-xl overflow-hidden">
-                                                <button
-                                                    onClick={() => handleLinkSettingsChange('restricted')}
-                                                    className="w-full px-4 py-2.5 text-left text-sm text-on-surface hover:bg-surface-bright transition-colors flex items-center justify-between"
-                                                >
-                                                    Restricted
-                                                    {linkAccess === 'restricted' && <Check size={14} className="text-primary" />}
-                                                </button>
-                                                <button
-                                                    onClick={() => handleLinkSettingsChange('public')}
-                                                    className="w-full px-4 py-2.5 text-left text-sm text-on-surface hover:bg-surface-bright transition-colors flex items-center justify-between"
-                                                >
-                                                    Anyone with the link
-                                                    {linkAccess === 'public' && <Check size={14} className="text-primary" />}
-                                                </button>
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
+                                {showLinkDropdown && (
+                                    <>
+                                        <div className="fixed inset-0 z-10" onClick={() => setShowLinkDropdown(false)} />
+                                        <div className="absolute left-0 top-6 z-20 w-56 bg-surface-container-high border border-outline-variant/20 rounded-xl shadow-xl overflow-hidden">
+                                            <button
+                                                onClick={() => handleLinkSettingsChange('restricted')}
+                                                className="w-full px-4 py-2.5 text-left text-sm text-on-surface hover:bg-surface-bright transition-colors flex items-center justify-between"
+                                            >
+                                                Restricted
+                                                {linkAccess === 'restricted' && <Check size={14} className="text-primary" />}
+                                            </button>
+                                            <button
+                                                onClick={() => handleLinkSettingsChange('public')}
+                                                className="w-full px-4 py-2.5 text-left text-sm text-on-surface hover:bg-surface-bright transition-colors flex items-center justify-between"
+                                            >
+                                                Anyone with the link
+                                                {linkAccess === 'public' && <Check size={14} className="text-primary" />}
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
 
-                        {/* Copy link button */}
                         <button
                             onClick={handleCopyLink}
                             className="flex items-center gap-2 px-4 py-2 rounded-lg border border-primary/20 text-primary text-sm font-bold hover:bg-primary/5 transition-all active:scale-95"
@@ -342,7 +380,25 @@ const ShareModal = ({ document, onClose }) => {
                         </button>
                     </div>
 
-                    {/* Share URL display */}
+                    {/* Link permission — only shown when public */}
+                    {linkAccess === 'public' && (
+                        <div className="flex items-center gap-3 mb-4 p-3 bg-surface-container-highest/30 rounded-lg">
+                            <span className="text-xs text-on-surface-variant flex-1">
+                                People with the link can:
+                            </span>
+                            <select
+                                value={linkPermission}
+                                onChange={(e) => handleLinkPermissionChange(e.target.value)}
+                                className="bg-surface-container-high border border-outline-variant/20 rounded-lg px-3 py-1.5 text-on-surface text-xs outline-none cursor-pointer"
+                            >
+                                <option value="viewer">View only</option>
+                                <option value="commenter">Comment</option>
+                                <option value="editor">Edit</option>
+                            </select>
+                        </div>
+                    )}
+
+                    {/* Share URL */}
                     <div className="bg-surface-container-lowest rounded-lg p-3 flex items-center gap-3 border border-outline-variant/10">
                         <Link size={14} className="text-on-surface-variant flex-shrink-0" />
                         <input
@@ -351,24 +407,11 @@ const ShareModal = ({ document, onClose }) => {
                             className="bg-transparent border-none text-xs text-outline w-full focus:ring-0 outline-none cursor-text select-all"
                         />
                     </div>
-
-                    {/*
-           * TODO: if linkAccess is 'public', show linkPermission dropdown
-           * so owner can set whether link visitors can view/comment/edit
-           *
-           * {linkAccess === 'public' && (
-           *   <select value={linkPermission} onChange={...}>
-           *     <option value="viewer">Viewer</option>
-           *     <option value="commenter">Commenter</option>
-           *     <option value="editor">Editor</option>
-           *   </select>
-           * )}
-           */}
                 </section>
             </div>
 
             {/* ── Footer ── */}
-            <div className="mt-6 pt-4 border-t border-outline-variant/10 flex items-center justify-between">
+            <div className="mt-6 pt-4 border-t border-outline-variant/10 flex items-center justify-between flex-shrink-0">
                 <p className="text-[10px] text-on-surface-variant">
                     Link expires in 30 days
                 </p>

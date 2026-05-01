@@ -53,6 +53,8 @@ export const CollaboratorAPI = {
 
   updateCollaboratorRole: async (documentId, collaboratorId, data) => await axiosInstance.patch(`/v1/documents/${documentId}/collaborators/${collaboratorId}`, data),
 
+  updateDocSettings: async (documentId, data) => await axiosInstance.patch(`/v1/documents/${documentId}/settings`, data),
+
   validateInvitation: async (token) => await axiosInstance.get(`/v1/documents/invite-validate/${token}`),
 
   acceptInvitation: async (token) => await axiosInstance.post(`/v1/documents/collaborators/accept/${token}`),

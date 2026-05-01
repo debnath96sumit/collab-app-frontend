@@ -59,7 +59,11 @@ const DashboardHeader = ({ searchQuery, onSearchChange }) => {
                             onClick={() => setShowUserMenu((prev) => !prev)}
                             className="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container text-xs font-bold border border-outline-variant/30 hover:ring-2 ring-primary/30 transition-all"
                         >
-                            {getInitials(user?.fullName)}
+                            {user?.avatarUrl ? (
+                                <img src={user?.avatarUrl} alt="Avatar" className="w-full h-full object-cover rounded-full" />
+                            ) : (
+                                getInitials(user?.fullName)
+                            )}
                         </button>
 
                         {showUserMenu && (

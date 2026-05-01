@@ -6,7 +6,7 @@ const ModalWrapper = ({ children, onClose }) => {
                 if (e.target === e.currentTarget) onClose();
             }}
         >
-            <div className="bg-surface-container-high border border-outline-variant/20 rounded-xl p-6 w-full max-w-md shadow-2xl">
+            <div className="bg-surface-container-high border border-outline-variant/20 rounded-xl p-6 w-full max-w-md shadow-2xl max-h-[95vh] flex flex-col overflow-hidden">
                 {children}
             </div>
         </div>

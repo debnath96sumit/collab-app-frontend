@@ -12,6 +12,7 @@ import Toaster from './components/Toaster.jsx'
 import Editor from './pages/Editor.jsx'
 import NotFound from './pages/NotFound.jsx'
 import InvitationAccept from './pages/invitation/accept.jsx'
+import SharedDocument from './pages/SharedDocument.jsx';
 
 function App() {
   return (
@@ -32,6 +33,8 @@ function App() {
             path="/register"
             element={<PublicRoute><Register /></PublicRoute>}
           />
+
+          <Route path="/document/shared/:shareToken" element={<SharedDocument />} />
           <Route
             path="/invitation/accept"
             element={<InvitationAccept />}
@@ -52,6 +55,8 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+
           <Route path="*" element={<NotFound />} />
         </Routes>
       </AuthProvider>

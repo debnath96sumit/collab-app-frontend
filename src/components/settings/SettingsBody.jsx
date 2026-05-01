@@ -46,13 +46,6 @@ const SettingsBody = () => {
     const [showOldPassword, setShowOldPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [fieldErrors, setFieldErrors] = useState({});
-    // // ── Profile state ─────────────────────────────────────────────────────────
-    // const [profileData, setProfileData] = useState({
-    //     fullName: user?.fullName ?? '',
-    //     email: user?.email ?? '',
-    //     username: user?.username ?? '',
-    // });
 
     const {
         register: registerProfile,
@@ -83,10 +76,18 @@ const SettingsBody = () => {
         setAvatarPreview(URL.createObjectURL(file));
     };
 
-    const [passwordData, setPasswordData] = useState({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: '',
+    const {
+        register: registerPassword,
+        handleSubmit: handlePasswordSubmit,
+        formState: { errors: passwordErrors, isValid: isPasswordValid },
+        reset: resetPasswordForm
+    } = useForm({
+        resolver: zodResolver(changePasswordSchema),
+        defaultValues: {
+            currentPassword: '',
+            newPassword: '',
+            confirmPassword: '',
+        }
     });
     const [passwordLoading, setPasswordLoading] = useState(false);
 
@@ -128,31 +129,16 @@ const SettingsBody = () => {
     };
 
 
-    const handlePasswordInputChange = (e) => {
-        const { name, value } = e.target;
-        setPasswordData((prev) => ({ ...prev, [name]: value }));
-        if (fieldErrors[name]) {
-            setFieldErrors((prev) => ({ ...prev, [name]: null }));
-        }
-    };
-
-    const handlePasswordUpdate = async (e) => {
-        if (e) e.preventDefault();
-        setFieldErrors({});
-        const validation = changePasswordSchema.safeParse(passwordData);
-        if (!validation.success) {
-            setFieldErrors(validation.error.flatten().fieldErrors);
-            return;
-        }
+    const onPasswordSubmit = async (data) => {
         setPasswordLoading(true);
         try {
             const res = await UserAPI.changePassword({
-                oldPassword: passwordData.currentPassword,
-                newPassword: passwordData.newPassword,
+                oldPassword: data.currentPassword,
+                newPassword: data.newPassword,
             });
             if (res.statusCode === 200) {
                 pushToast({ message: res.message, type: 'success' });
-                setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                resetPasswordForm();
             } else {
                 pushToast({ message: res.message, type: 'error' });
             }
@@ -201,8 +187,8 @@ const SettingsBody = () => {
                                 <div className="flex flex-col items-center gap-3 flex-shrink-0">
                                     <div className="relative w-32 h-32 rounded-full overflow-visible">
                                         <div className="w-full h-full rounded-full border-4 border-surface-container-highest bg-primary-container flex items-center justify-center text-4xl font-bold text-on-primary-container overflow-hidden">
-                                            {avatarPreview || user?.avatar ? (
-                                                <img src={avatarPreview || user?.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                                            {avatarPreview || user?.avatarUrl ? (
+                                                <img src={avatarPreview || user?.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                                             ) : (
                                                 user?.fullName?.[0]?.toUpperCase() ?? 'U'
                                             )}
@@ -282,7 +268,7 @@ const SettingsBody = () => {
                             <div className="mt-8 pt-8 border-t border-outline-variant/10 flex justify-end">
                                 <button
                                     type="submit"
-                                    disabled={profileLoading}
+                                    disabled={profileLoading || !isProfileDirty}
                                     className="bg-gradient-to-br from-primary-fixed-dim to-primary-container text-on-primary-container font-semibold py-3 px-8 rounded-xl shadow-lg hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
                                 >
                                     {profileLoading ? 'Saving...' : 'Save Changes'}
@@ -294,109 +280,108 @@ const SettingsBody = () => {
 
                     {/* Security section */}
                     {activeSection === 'security' && <section className={sectionClass}>
-                        <div className="flex items-center gap-4 mb-8">
-                            <Lock size={20} className="text-primary" />
-                            <h3 className="text-xl font-headline font-bold text-on-surface">
-                                Security & Password
-                            </h3>
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-6 max-w-xl">
-                            <div className="flex flex-col gap-2">
-                                <label className="text-xs font-label text-on-surface-variant px-1">
-                                    Current Password
-                                </label>
-                                <div className="relative">
-                                    <input
-                                        type={showOldPassword ? 'text' : 'password'}
-                                        name="currentPassword"
-                                        value={passwordData.currentPassword}
-                                        onChange={handlePasswordInputChange}
-                                        placeholder="••••••••••••"
-                                        className={inputClass}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowOldPassword(!showOldPassword)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant"
-                                    >
-                                        {showOldPassword ? <Eye size={18} /> : <EyeOff size={18} />}
-                                    </button>
-                                </div>
-                                {fieldErrors.currentPassword && (
-                                    <p className="text-xs text-error px-1">
-                                        {fieldErrors.currentPassword}
-                                    </p>
-                                )}
+                        <form onSubmit={handlePasswordSubmit(onPasswordSubmit)}>
+                            <div className="flex items-center gap-4 mb-8">
+                                <Lock size={20} className="text-primary" />
+                                <h3 className="text-xl font-headline font-bold text-on-surface">
+                                    Security & Password
+                                </h3>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 gap-6 max-w-xl">
                                 <div className="flex flex-col gap-2">
                                     <label className="text-xs font-label text-on-surface-variant px-1">
-                                        New Password
+                                        Current Password
                                     </label>
                                     <div className="relative">
                                         <input
-                                            type={showNewPassword ? 'text' : 'password'}
-                                            name="newPassword"
-                                            value={passwordData.newPassword}
-                                            onChange={handlePasswordInputChange}
-                                            className={inputClass}
+                                            type={showOldPassword ? 'text' : 'password'}
+                                            name="currentPassword"
+                                            {...registerPassword('currentPassword')}
                                             placeholder="••••••••••••"
+                                            className={inputClass}
                                         />
                                         <button
                                             type="button"
-                                            onClick={() => setShowNewPassword(!showNewPassword)}
+                                            onClick={() => setShowOldPassword(!showOldPassword)}
                                             className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant"
                                         >
-                                            {showNewPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                                            {showOldPassword ? <Eye size={18} /> : <EyeOff size={18} />}
                                         </button>
                                     </div>
-                                    {fieldErrors.newPassword && (
+                                    {passwordErrors.currentPassword && (
                                         <p className="text-xs text-error px-1">
-                                            {fieldErrors.newPassword}
+                                            {passwordErrors.currentPassword}
                                         </p>
                                     )}
                                 </div>
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-xs font-label text-on-surface-variant px-1">
-                                        Confirm New Password
-                                    </label>
-                                    <div className="relative">
-                                        <input
-                                            type={showConfirmPassword ? 'text' : 'password'}
-                                            name="confirmPassword"
-                                            value={passwordData.confirmPassword}
-                                            onChange={handlePasswordInputChange}
-                                            className={inputClass}
-                                            placeholder="••••••••••••"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant"
-                                        >
-                                            {showConfirmPassword ? <Eye size={18} /> : <EyeOff size={18} />}
-                                        </button>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-label text-on-surface-variant px-1">
+                                            New Password
+                                        </label>
+                                        <div className="relative">
+                                            <input
+                                                type={showNewPassword ? 'text' : 'password'}
+                                                name="newPassword"
+                                                {...registerPassword('newPassword')}
+                                                className={inputClass}
+                                                placeholder="••••••••••••"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowNewPassword(!showNewPassword)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant"
+                                            >
+                                                {showNewPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                                            </button>
+                                        </div>
+                                        {passwordErrors.newPassword && (
+                                            <p className="text-xs text-error px-1">
+                                                {passwordErrors.newPassword}
+                                            </p>
+                                        )}
                                     </div>
-                                    {fieldErrors.confirmPassword && (
-                                        <p className="text-xs text-error px-1">
-                                            {fieldErrors.confirmPassword}
-                                        </p>
-                                    )}
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-label text-on-surface-variant px-1">
+                                            Confirm New Password
+                                        </label>
+                                        <div className="relative">
+                                            <input
+                                                type={showConfirmPassword ? 'text' : 'password'}
+                                                name="confirmPassword"
+                                                {...registerPassword('confirmPassword')}
+                                                className={inputClass}
+                                                placeholder="••••••••••••"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant"
+                                            >
+                                                {showConfirmPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                                            </button>
+                                        </div>
+                                        {passwordErrors.confirmPassword && (
+                                            <p className="text-xs text-error px-1">
+                                                {passwordErrors.confirmPassword}
+                                            </p>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="mt-8 pt-8 border-t border-outline-variant/10 flex justify-end">
-                            <button
-                                onClick={handlePasswordUpdate}
-                                disabled={passwordLoading}
-                                className="border border-primary-container/30 text-primary hover:bg-primary-container/10 font-semibold py-3 px-8 rounded-xl active:scale-95 transition-all disabled:opacity-50 text-sm"
-                            >
-                                {passwordLoading ? 'Updating...' : 'Update Password'}
-                            </button>
-                        </div>
+                            <div className="mt-8 pt-8 border-t border-outline-variant/10 flex justify-end">
+                                <button
+                                    type="submit"
+                                    disabled={passwordLoading || !isPasswordValid}
+                                    className="border border-primary-container/30 text-primary hover:bg-primary-container/10 font-semibold py-3 px-8 rounded-xl active:scale-95 transition-all disabled:opacity-50 text-sm"
+                                >
+                                    {passwordLoading ? 'Updating...' : 'Update Password'}
+                                </button>
+                            </div>
+                        </form>
                     </section>}
 
                     {/* Preferences section */}
