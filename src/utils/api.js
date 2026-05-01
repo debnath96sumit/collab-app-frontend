@@ -23,7 +23,11 @@ export const AuthAPI = {
 export const UserAPI = {
   getProfile: async () => axiosInstance.get('/v1/users/profile-details'),
 
-  updateProfile: async (userData) => axiosInstance.post('/v1/users/update-profile', userData),
+  updateProfile: async (userData) => axiosInstance.patch('/v1/users/update-profile', userData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  }),
 
   changePassword: async ({ oldPassword, newPassword }) => axiosInstance.post('/v1/users/change-password', { oldPassword, newPassword }),
 };

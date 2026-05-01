@@ -29,6 +29,7 @@ const Editor = () => {
     const [activeCollaborators, setActiveCollaborators] = useState([]);
     const [pendingCollaborators, setPendingCollaborators] = useState([]);
     const [onlineUsers, setOnlineUsers] = useState([]);
+    const [cursors, setCursors] = useState({});
 
     useEffect(() => {
         const token = localStorage.getItem('access_token');
@@ -84,6 +85,13 @@ const Editor = () => {
             }
         });
 
+        socketInstance.on('cursor-update', (data) => {
+            setCursors(prev => ({
+                ...prev,
+                [data.userId]: data
+            }));
+        });
+
         return () => {
             socketInstance.disconnect();
         };
@@ -116,6 +124,11 @@ const Editor = () => {
         debouncedEmit('renameDocument', { docId: document.id, newTitle });
     };
 
+    const handleCursorMove = (position) => {
+        if (!document.id || !socket) return;
+        socket.emit('cursor-position', { documentId: document.id, position });
+    };
+
     return (
         <div className="bg-background text-on-surface h-screen w-screen overflow-hidden flex flex-col">
             <EditorHeader
@@ -134,10 +147,12 @@ const Editor = () => {
                 <main className="flex-1 bg-surface-dim flex flex-col items-center overflow-hidden relative">
                     <EditorToolbar />
 
-                    <div className="flex-1 w-full max-w-4xl px-12 overflow-y-auto">
+                    <div className="flex-1 w-full max-w-4xl px-12 overflow-y-auto relative">
                         <EditorCanvas
                             content={document.content}
                             onChange={handleContentChange}
+                            onCursorMove={handleCursorMove}
+                            cursors={cursors}
                         />
                     </div>
                 </main>

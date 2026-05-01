@@ -6,8 +6,15 @@ import {
     CreditCard,
     AlertTriangle,
     Camera,
+    Eye,
+    EyeOff,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { UserAPI } from '../../utils/api';
+import { changePasswordSchema, updateProfileSchema } from '../../lib/validations/user';
+import { pushToast } from '../../utils/toaster';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 
 const inputClass =
     'w-full bg-surface-container-highest border-none rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary-container text-on-surface outline-none text-sm';
@@ -35,17 +42,47 @@ const navItems = [
 
 const SettingsBody = () => {
     const { user } = useAuth();
-
     const [activeSection, setActiveSection] = useState('profile');
+    const [showOldPassword, setShowOldPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [fieldErrors, setFieldErrors] = useState({});
+    // // ── Profile state ─────────────────────────────────────────────────────────
+    // const [profileData, setProfileData] = useState({
+    //     fullName: user?.fullName ?? '',
+    //     email: user?.email ?? '',
+    //     username: user?.username ?? '',
+    // });
 
-    // ── Profile state ─────────────────────────────────────────────────────────
-    const [profileData, setProfileData] = useState({
-        fullName: user?.fullName ?? '',
-        username: user?.username ?? '',
+    const {
+        register: registerProfile,
+        handleSubmit: handleProfileSubmit,
+        formState: { errors: profileErrors, isDirty: isProfileDirty },
+        reset: resetProfileForm
+    } = useForm({
+        resolver: zodResolver(updateProfileSchema),
+        defaultValues: {
+            fullName: user?.fullName ?? '',
+            email: user?.email ?? '',
+            username: user?.username ?? '',
+        }
     });
-    const [profileLoading, setProfileLoading] = useState(false);
 
-    // ── Security state ────────────────────────────────────────────────────────
+    const [profileLoading, setProfileLoading] = useState(false);
+    const [avatarFile, setAvatarFile] = useState(null);
+    const [avatarPreview, setAvatarPreview] = useState(null);
+
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            pushToast({ message: 'Please upload an image file', type: 'error' });
+            return;
+        }
+        setAvatarFile(file);
+        setAvatarPreview(URL.createObjectURL(file));
+    };
+
     const [passwordData, setPasswordData] = useState({
         currentPassword: '',
         newPassword: '',
@@ -62,15 +99,27 @@ const SettingsBody = () => {
 
     // ── Handlers ──────────────────────────────────────────────────────────────
 
-    /**
-     * handleProfileSave
-     * TODO: call UserAPI.updateProfile({ fullName, username })
-     * On success → update user in AuthContext
-     */
-    const handleProfileSave = async () => {
+    const onProfileSubmit = async (data) => {
         setProfileLoading(true);
         try {
-            // TODO: await UserAPI.updateProfile(profileData)
+            const formData = new FormData();
+            formData.append('fullName', data.fullName);
+            formData.append('username', data.username);
+            formData.append('email', data.email);
+
+            console.log(avatarFile);
+
+            if (avatarFile) {
+                formData.append('avatar', avatarFile);
+            }
+
+            const res = await UserAPI.updateProfile(formData);
+            if (res.statusCode === 200) {
+                pushToast({ message: res.message, type: 'success' });
+                resetProfileForm();
+            } else {
+                pushToast({ message: res.message, type: 'error' });
+            }
         } catch (error) {
             console.error('Failed to update profile:', error);
         } finally {
@@ -78,20 +127,35 @@ const SettingsBody = () => {
         }
     };
 
-    /**
-     * handlePasswordUpdate
-     * TODO: call UserAPI.updatePassword({ currentPassword, newPassword })
-     * Validate newPassword === confirmPassword before calling
-     */
-    const handlePasswordUpdate = async () => {
-        if (passwordData.newPassword !== passwordData.confirmPassword) {
-            alert('Passwords do not match');
+
+    const handlePasswordInputChange = (e) => {
+        const { name, value } = e.target;
+        setPasswordData((prev) => ({ ...prev, [name]: value }));
+        if (fieldErrors[name]) {
+            setFieldErrors((prev) => ({ ...prev, [name]: null }));
+        }
+    };
+
+    const handlePasswordUpdate = async (e) => {
+        if (e) e.preventDefault();
+        setFieldErrors({});
+        const validation = changePasswordSchema.safeParse(passwordData);
+        if (!validation.success) {
+            setFieldErrors(validation.error.flatten().fieldErrors);
             return;
         }
         setPasswordLoading(true);
         try {
-            // TODO: await UserAPI.updatePassword(passwordData)
-            setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+            const res = await UserAPI.changePassword({
+                oldPassword: passwordData.currentPassword,
+                newPassword: passwordData.newPassword,
+            });
+            if (res.statusCode === 200) {
+                pushToast({ message: res.message, type: 'success' });
+                setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+            } else {
+                pushToast({ message: res.message, type: 'error' });
+            }
         } catch (error) {
             console.error('Failed to update password:', error);
         } finally {
@@ -125,91 +189,107 @@ const SettingsBody = () => {
 
                     {/* Profile section */}
                     {activeSection === 'profile' && <section className={sectionClass}>
-                        <div className="flex items-center gap-4 mb-8">
-                            <User size={20} className="text-primary" />
-                            <h3 className="text-xl font-headline font-bold text-on-surface">
-                                Profile Information
-                            </h3>
-                        </div>
-
-                        <div className="flex flex-col md:flex-row gap-10 items-start">
-                            {/*
-                     * Avatar upload — visual only for MVP
-                     * TODO: wire up file input → upload to server → update avatarUrl
-                     */}
-                            <div className="flex flex-col items-center gap-3 group cursor-pointer flex-shrink-0">
-                                <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-surface-container-highest group-hover:border-primary-container/40 transition-all">
-                                    <div className="w-full h-full bg-primary-container flex items-center justify-center text-4xl font-bold text-on-primary-container">
-                                        {user?.fullName?.[0]?.toUpperCase() ?? 'U'}
-                                    </div>
-                                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <Camera size={24} className="text-white" />
-                                    </div>
-                                </div>
-                                <span className="text-xs text-on-surface-variant">
-                                    Click to upload avatar
-                                </span>
+                        <form onSubmit={handleProfileSubmit(onProfileSubmit)}>
+                            <div className="flex items-center gap-4 mb-8">
+                                <User size={20} className="text-primary" />
+                                <h3 className="text-xl font-headline font-bold text-on-surface">
+                                    Profile Information
+                                </h3>
                             </div>
 
-                            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-xs font-label text-on-surface-variant px-1">
-                                        Full Name
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={profileData.fullName}
-                                        onChange={(e) =>
-                                            setProfileData((prev) => ({ ...prev, fullName: e.target.value }))
-                                        }
-                                        className={inputClass}
-                                    />
-                                </div>
-
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-xs font-label text-on-surface-variant px-1">
-                                        Username
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={profileData.username}
-                                        onChange={(e) =>
-                                            setProfileData((prev) => ({ ...prev, username: e.target.value }))
-                                        }
-                                        className={inputClass}
-                                    />
-                                </div>
-
-                                <div className="flex flex-col gap-2 md:col-span-2">
-                                    <label className="text-xs font-label text-on-surface-variant px-1">
-                                        Email Address
-                                    </label>
-                                    {/*
-                         * Email is read-only — cannot be changed
-                         * matches backend where email is unique and not updatable via profile endpoint
-                         */}
-                                    <input
-                                        type="email"
-                                        value={user?.email ?? ''}
-                                        readOnly
-                                        className="w-full bg-surface-container-lowest text-on-surface-variant border-none rounded-xl px-4 py-3 cursor-not-allowed italic text-sm outline-none"
-                                    />
-                                    <span className="text-[10px] text-on-surface-variant/60 px-1">
-                                        Email cannot be changed manually. Contact support for help.
+                            <div className="flex flex-col md:flex-row gap-10 items-start">
+                                <div className="flex flex-col items-center gap-3 flex-shrink-0">
+                                    <div className="relative w-32 h-32 rounded-full overflow-visible">
+                                        <div className="w-full h-full rounded-full border-4 border-surface-container-highest bg-primary-container flex items-center justify-center text-4xl font-bold text-on-primary-container overflow-hidden">
+                                            {avatarPreview || user?.avatar ? (
+                                                <img src={avatarPreview || user?.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                                            ) : (
+                                                user?.fullName?.[0]?.toUpperCase() ?? 'U'
+                                            )}
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => document.getElementById('profile-upload').click()}
+                                            disabled={profileLoading}
+                                            className="absolute bottom-0 right-0 bg-purple-600 rounded-full p-2 text-white hover:bg-purple-700 transition-colors disabled:opacity-50 shadow-md"
+                                        >
+                                            <Camera size={14} />
+                                        </button>
+                                        <input
+                                            id="profile-upload"
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={handleFileChange}
+                                        />
+                                    </div>
+                                    <span className="text-xs text-on-surface-variant">
+                                        Click camera icon to upload
                                     </span>
                                 </div>
-                            </div>
-                        </div>
 
-                        <div className="mt-8 pt-8 border-t border-outline-variant/10 flex justify-end">
-                            <button
-                                onClick={handleProfileSave}
-                                disabled={profileLoading}
-                                className="bg-gradient-to-br from-primary-fixed-dim to-primary-container text-on-primary-container font-semibold py-3 px-8 rounded-xl shadow-lg hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
-                            >
-                                {profileLoading ? 'Saving...' : 'Save Changes'}
-                            </button>
-                        </div>
+                                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-label text-on-surface-variant px-1">
+                                            Full Name
+                                        </label>
+                                        <input
+                                            type="text"
+                                            {...registerProfile("fullName")}
+                                            className={inputClass}
+                                        />
+                                        {profileErrors.fullName && (
+                                            <p className="text-xs text-error px-1">
+                                                {profileErrors.fullName.message}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-label text-on-surface-variant px-1">
+                                            Username
+                                        </label>
+                                        <input
+                                            type="text"
+                                            {...registerProfile("username")}
+                                            className={inputClass}
+                                        />
+                                        {profileErrors.username && (
+                                            <p className="text-xs text-error px-1">
+                                                {profileErrors.username.message}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div className="flex flex-col gap-2 md:col-span-2">
+                                        <label className="text-xs font-label text-on-surface-variant px-1">
+                                            Email Address
+                                        </label>
+                                        <input
+                                            type="email"
+                                            {...registerProfile("email")}
+                                            className={inputClass}
+                                        />
+                                        {profileErrors.email && (
+                                            <p className="text-xs text-error px-1">
+                                                {profileErrors.email.message}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mt-8 pt-8 border-t border-outline-variant/10 flex justify-end">
+                                <button
+                                    type="submit"
+                                    disabled={profileLoading}
+                                    className="bg-gradient-to-br from-primary-fixed-dim to-primary-container text-on-primary-container font-semibold py-3 px-8 rounded-xl shadow-lg hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
+                                >
+                                    {profileLoading ? 'Saving...' : 'Save Changes'}
+                                </button>
+                            </div>
+                        </form>
+
                     </section>}
 
                     {/* Security section */}
@@ -226,15 +306,28 @@ const SettingsBody = () => {
                                 <label className="text-xs font-label text-on-surface-variant px-1">
                                     Current Password
                                 </label>
-                                <input
-                                    type="password"
-                                    value={passwordData.currentPassword}
-                                    onChange={(e) =>
-                                        setPasswordData((prev) => ({ ...prev, currentPassword: e.target.value }))
-                                    }
-                                    placeholder="••••••••••••"
-                                    className={inputClass}
-                                />
+                                <div className="relative">
+                                    <input
+                                        type={showOldPassword ? 'text' : 'password'}
+                                        name="currentPassword"
+                                        value={passwordData.currentPassword}
+                                        onChange={handlePasswordInputChange}
+                                        placeholder="••••••••••••"
+                                        className={inputClass}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowOldPassword(!showOldPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant"
+                                    >
+                                        {showOldPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                                    </button>
+                                </div>
+                                {fieldErrors.currentPassword && (
+                                    <p className="text-xs text-error px-1">
+                                        {fieldErrors.currentPassword}
+                                    </p>
+                                )}
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -242,27 +335,55 @@ const SettingsBody = () => {
                                     <label className="text-xs font-label text-on-surface-variant px-1">
                                         New Password
                                     </label>
-                                    <input
-                                        type="password"
-                                        value={passwordData.newPassword}
-                                        onChange={(e) =>
-                                            setPasswordData((prev) => ({ ...prev, newPassword: e.target.value }))
-                                        }
-                                        className={inputClass}
-                                    />
+                                    <div className="relative">
+                                        <input
+                                            type={showNewPassword ? 'text' : 'password'}
+                                            name="newPassword"
+                                            value={passwordData.newPassword}
+                                            onChange={handlePasswordInputChange}
+                                            className={inputClass}
+                                            placeholder="••••••••••••"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowNewPassword(!showNewPassword)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant"
+                                        >
+                                            {showNewPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                                        </button>
+                                    </div>
+                                    {fieldErrors.newPassword && (
+                                        <p className="text-xs text-error px-1">
+                                            {fieldErrors.newPassword}
+                                        </p>
+                                    )}
                                 </div>
                                 <div className="flex flex-col gap-2">
                                     <label className="text-xs font-label text-on-surface-variant px-1">
                                         Confirm New Password
                                     </label>
-                                    <input
-                                        type="password"
-                                        value={passwordData.confirmPassword}
-                                        onChange={(e) =>
-                                            setPasswordData((prev) => ({ ...prev, confirmPassword: e.target.value }))
-                                        }
-                                        className={inputClass}
-                                    />
+                                    <div className="relative">
+                                        <input
+                                            type={showConfirmPassword ? 'text' : 'password'}
+                                            name="confirmPassword"
+                                            value={passwordData.confirmPassword}
+                                            onChange={handlePasswordInputChange}
+                                            className={inputClass}
+                                            placeholder="••••••••••••"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant"
+                                        >
+                                            {showConfirmPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                                        </button>
+                                    </div>
+                                    {fieldErrors.confirmPassword && (
+                                        <p className="text-xs text-error px-1">
+                                            {fieldErrors.confirmPassword}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                         </div>
