@@ -1,5 +1,5 @@
 import { ArrowLeft, Share2, Bell, Settings, Users } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import PresenceAvatars from './PresenceAvatars';
 import SaveStatus from './SaveStatus';
 
@@ -29,9 +29,9 @@ const EditorHeader = ({
                 </button>
 
                 <div className="flex items-center gap-3">
-                    <span className="text-lg font-bold tracking-tight text-slate-100 font-headline">
-                        CollabDocs
-                    </span>
+                    <Link to="/dashboard" className="text-lg font-bold tracking-tight text-slate-100 font-headline">
+                        Docs
+                    </Link>
                     <span className="text-slate-600">/</span>
                     <input
                         type="text"

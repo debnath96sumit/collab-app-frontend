@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { X, Clock, UserCheck } from 'lucide-react';
 import { getInitials } from '../../helpers';
+import { CollaboratorAPI } from '../../utils/api';
+import { pushToast } from '../../utils/toaster';
 
 const roleBadgeStyles = {
     owner: 'bg-primary-container text-on-primary-container',
@@ -14,7 +16,8 @@ const TABS = [
     { key: 'pending', label: 'Pending', icon: Clock },
 ];
 
-const CollaboratorRow = ({ collab, isPending }) => {
+const CollaboratorRow = ({ collab, isPending, document, onRefresh }) => {
+
     const user = collab?.user;
     const avatarUrl = user?.avatarUrl;
 
@@ -30,8 +33,18 @@ const CollaboratorRow = ({ collab, isPending }) => {
             ? 'text-blue-400'
             : 'text-slate-500';
 
+    const handleRemoveCollaborator = async (collabId) => {
+        try {
+            const response = await CollaboratorAPI.removeCollaborator(document.id, collabId);
+            pushToast({ message: response.message, type: 'success' });
+            if (onRefresh) await onRefresh();
+        } catch (error) {
+            console.log(error);
+            pushToast({ message: 'Failed to remove collaborator', type: 'error' });
+        }
+    };
     return (
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between group">
             <div className="flex items-center gap-3">
                 {/* Avatar with online dot */}
                 <div className="relative flex-shrink-0">
@@ -83,15 +96,33 @@ const CollaboratorRow = ({ collab, isPending }) => {
                 </div>
             </div>
 
-            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold capitalize 
-              ${roleBadgeStyles[collab.role] ?? roleBadgeStyles.viewer}`}>
-                {collab.role}
-            </span>
+            <div className="flex items-center gap-2">
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold capitalize 
+                  ${roleBadgeStyles[collab.role] ?? roleBadgeStyles.viewer}`}>
+                    {collab.role}
+                </span>
+                <button
+                    className="opacity-0 group-hover:opacity-100 p-1 hover:bg-error/10 rounded-lg transition-all"
+                    title="Remove collaborator"
+                    onClick={() => handleRemoveCollaborator(collab.id)}
+                >
+                    <X size={14} className="text-error" />
+                </button>
+            </div>
         </div>
     );
 };
 
-const CollabPanel = ({ activeCollaborators = [], pendingCollaborators = [], presence = [], cursors = {}, isOpen, onClose }) => {
+const CollabPanel = ({
+    document,
+    activeCollaborators = [],
+    pendingCollaborators = [],
+    presence = [],
+    cursors = {},
+    isOpen,
+    onClose,
+    onRefresh
+}) => {
     const [activeTab, setActiveTab] = useState('active');
 
     if (!isOpen) return null;
@@ -166,9 +197,10 @@ const CollabPanel = ({ activeCollaborators = [], pendingCollaborators = [], pres
                     <div className="space-y-4">
                         {currentList.map((collab) => (
                             <CollaboratorRow
-                                key={collab.id || collab.email}
                                 collab={collab}
                                 isPending={isPending}
+                                document={document}
+                                onRefresh={onRefresh}
                             />
                         ))}
                     </div>

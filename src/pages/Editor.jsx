@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState, useRef } from 'react';
 import EditorHeader from '../components/editor/EditorHeader';
-import EditorSidebar from '../components/editor/EditorSidebar';
 import EditorToolbar from '../components/editor/EditorToolbar';
 import EditorCanvas from '../components/editor/EditorCanvas';
 import CollabPanel from '../components/editor/CollabPanel';
@@ -32,6 +31,16 @@ const Editor = () => {
     const [cursors, setCursors] = useState({});
     const typingStopTimer = useRef(null);
     const isTypingRef = useRef(false);
+    const fetchCollaborators = useCallback(async () => {
+        try {
+            const collaborator_resp = await CollaboratorAPI.getAllCollaborators(id);
+            setActiveCollaborators(collaborator_resp.data.active);
+            setPendingCollaborators(collaborator_resp.data.pending);
+        } catch (error) {
+            console.error('Failed to fetch collaborators:', error);
+        }
+    }, [id]);
+
     useEffect(() => {
         const token = localStorage.getItem('access_token');
         const socketInstance = io(`${import.meta.env.VITE_API_URL}/document-edits`, {
@@ -50,9 +59,7 @@ const Editor = () => {
                 const response = await DocumentAPI.getDocument(id);
                 if (response.data) {
                     setDocument(response.data);
-                    const collaborator_resp = await CollaboratorAPI.getAllCollaborators(id);
-                    setActiveCollaborators(collaborator_resp.data.active);
-                    setPendingCollaborators(collaborator_resp.data.pending);
+                    await fetchCollaborators();
                 }
 
                 socketInstance.emit('joinDocument', id);
@@ -174,28 +181,28 @@ const Editor = () => {
             />
 
             <div className="flex flex-1 overflow-hidden">
-                <EditorSidebar />
 
                 <main className="flex-1 bg-surface-dim flex flex-col items-center overflow-hidden relative">
                     <EditorToolbar />
 
-                    <div className="flex-1 w-full max-w-4xl px-12 overflow-y-auto relative">
+                    <div className="flex-1 w-full max-w-4xl px-12 overflow-y-auto relative custom-scrollbar">
                         <EditorCanvas
                             content={document.content}
                             onChange={handleContentChange}
                             onCursorMove={handleCursorMove}
-                            cursors={cursors}
                         />
                     </div>
                 </main>
 
                 <CollabPanel
+                    document={document}
                     activeCollaborators={activeCollaborators}
                     pendingCollaborators={pendingCollaborators}
-                    presence={activeCollaborators}
+                    presence={onlineUsers}
                     cursors={cursors}
                     isOpen={isCollabPanelOpen}
                     onClose={() => setIsCollabPanelOpen(false)}
+                    onRefresh={fetchCollaborators}
                 />
             </div>
             {showShareModal && (

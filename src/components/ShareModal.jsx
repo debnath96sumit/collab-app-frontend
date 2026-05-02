@@ -19,7 +19,6 @@ const ShareModal = ({ document, onClose, activeCollaborators }) => {
     const [inviteEmail, setInviteEmail] = useState('');
     const [inviteRole, setInviteRole] = useState('editor');
     const [inviteLoading, setInviteLoading] = useState(false);
-    const [inviteError, setInviteError] = useState('');
 
     const [linkAccess, setLinkAccess] = useState(document?.linkAccess ?? 'restricted');
     const [linkPermission, setLinkPermission] = useState(document?.linkPermission ?? 'viewer');
@@ -31,7 +30,6 @@ const ShareModal = ({ document, onClose, activeCollaborators }) => {
     );
     const handleInvite = async () => {
         if (!inviteEmail.trim()) return;
-        setInviteError('');
         setInviteLoading(true);
 
         try {
@@ -39,11 +37,15 @@ const ShareModal = ({ document, onClose, activeCollaborators }) => {
                 email: inviteEmail,
                 role: inviteRole,
             });
+            console.log(response);
+
             setInviteEmail('');
             pushToast({ message: response.message, type: 'success' });
+            if (response.data.length > 0 && response.data[0].user) {
+                setCollaborators((prev) => [...prev, response.data[0]]);
+            }
         } catch (error) {
             console.log(error);
-            setInviteError(error?.response?.data?.message ?? 'Failed to send invite');
         } finally {
             setInviteLoading(false);
         }
@@ -184,9 +186,6 @@ const ShareModal = ({ document, onClose, activeCollaborators }) => {
                         </div>
                     </div>
 
-                    {inviteError && (
-                        <p className="text-sm text-error mt-2">{inviteError}</p>
-                    )}
                 </section>
 
                 {/* ── Section 2: People with access ── */}

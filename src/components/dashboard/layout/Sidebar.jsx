@@ -12,8 +12,8 @@ import {
 const navItems = [
     { icon: FolderOpen, label: 'My Workspace', path: '/dashboard', tab: 'my' },
     { icon: Users, label: 'Shared With Me', path: '/dashboard', tab: 'shared' },
-    { icon: Clock, label: 'Recent', path: '/dashboard', tab: 'recent' },
-    { icon: Trash2, label: 'Trash', path: '/dashboard', tab: 'trash' },
+    // { icon: Clock, label: 'Recent', path: '/dashboard', tab: 'recent' },
+    // { icon: Trash2, label: 'Trash', path: '/dashboard', tab: 'trash' },
 ];
 
 const Sidebar = ({ activeTab, onTabChange, onNewDocument }) => {
