@@ -8,6 +8,7 @@ import DocumentGrid from '../components/dashboard/documents/DocumentGrid';
 import CreateDocModal from '../components/dashboard/modals/CreateDocModal';
 import RenameDocModal from '../components/dashboard/modals/RenameDocModal';
 import DeleteDocModal from '../components/dashboard/modals/DeleteDocModal';
+import { pushToast } from '../utils/toaster';
 
 const Dashboard = () => {
     const navigate = useNavigate();
@@ -68,6 +69,7 @@ const Dashboard = () => {
             setMyDocuments((prev) => [data.data, ...prev]);
             setShowCreateModal(false);
             setNewDocTitle('');
+            pushToast({ message: data.message, type: 'success' });
         } catch (error) {
             console.error('Error creating document:', error);
         } finally {
@@ -89,6 +91,7 @@ const Dashboard = () => {
             setSharedDocuments((prev) =>
                 prev.map((doc) => (doc.id === updatedDoc.id ? updatedDoc : doc)),
             );
+            pushToast({ message: response.message, type: 'success' });
             closeRenameModal();
         } catch (error) {
             console.error('Error renaming document:', error);
@@ -100,13 +103,14 @@ const Dashboard = () => {
     const handleDeleteDocument = async () => {
         setDeleteLoading(true);
         try {
-            await DocumentAPI.deleteDocument(selectedDocument.id);
+            const response = await DocumentAPI.deleteDocument(selectedDocument.id);
             setMyDocuments((prev) =>
                 prev.filter((doc) => doc.id !== selectedDocument.id),
             );
+            pushToast({ message: response.message, type: 'success' });
             closeDeleteModal();
         } catch (error) {
-            console.error('Error deleting document:', error);
+            console.log('Error deleting document:', error);
         } finally {
             setDeleteLoading(false);
         }

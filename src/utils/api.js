@@ -41,7 +41,7 @@ export const DocumentAPI = {
 
   createDocument: async (data) => await axiosInstance.post(`/v1/documents/create`, data),
 
-  deleteDocument: async (documentId) => await axiosInstance.delete(`/v1/documents/${documentId}`),
+  deleteDocument: async (documentId) => await axiosInstance.delete(`/v1/documents/${documentId}/delete`),
 }
 
 export const CollaboratorAPI = {

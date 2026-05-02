@@ -108,19 +108,18 @@ const SettingsBody = () => {
             formData.append('username', data.username);
             formData.append('email', data.email);
 
-            console.log(avatarFile);
-
             if (avatarFile) {
                 formData.append('avatar', avatarFile);
             }
 
             const res = await UserAPI.updateProfile(formData);
-            if (res.statusCode === 200) {
-                pushToast({ message: res.message, type: 'success' });
-                resetProfileForm();
-            } else {
-                pushToast({ message: res.message, type: 'error' });
-            }
+            pushToast({ message: res.message, type: 'success' });
+            resetProfileForm({
+                fullName: res.data.fullName,
+                email: res.data.email,
+                username: res.data.username,
+            });
+            setAvatarFile(null);
         } catch (error) {
             console.error('Failed to update profile:', error);
         } finally {
@@ -136,12 +135,8 @@ const SettingsBody = () => {
                 oldPassword: data.currentPassword,
                 newPassword: data.newPassword,
             });
-            if (res.statusCode === 200) {
-                pushToast({ message: res.message, type: 'success' });
-                resetPasswordForm();
-            } else {
-                pushToast({ message: res.message, type: 'error' });
-            }
+            pushToast({ message: res.message, type: 'success' });
+            resetPasswordForm();
         } catch (error) {
             console.error('Failed to update password:', error);
         } finally {

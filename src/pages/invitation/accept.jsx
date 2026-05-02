@@ -25,7 +25,6 @@ const InvitationAccept = () => {
     const validateInvitation = async (inviteToken) => {
         try {
             const res = await CollaboratorAPI.validateInvitation(inviteToken);
-            console.log('Invitation details', res.data);
             setInviteDetails(res.data);
         } catch (err) {
             setError('Something went wrong. Please try again.');
@@ -43,18 +42,21 @@ const InvitationAccept = () => {
             if (inviteDetails?.email) {
                 localStorage.setItem('inviteEmail', inviteDetails.email);
             }
-            window.location.href = `/login?redirect=/invitation/accept?token=${token}`;
+            // window.location.href = `/login?redirect=/invitation/accept?token=${token}`;
+            const redirectUrl = `/invitation/accept?token=${token}`;
+            window.location.href = `/login?redirect=${encodeURIComponent(redirectUrl)}`;
         }
     };
 
-    const acceptInvitation = async (token) => {
+    const acceptInvitation = async (inviteToken) => {
         try {
-            const res = await CollaboratorAPI.acceptInvitation(token);
-            if (res.status === 200) {
-                window.location.href = `/documents/${res.data.data.documentId}`;
-            }
+            const res = await CollaboratorAPI.acceptInvitation(inviteToken);
+            pushToast({ message: res.message, type: 'success' });
+            setTimeout(() => {
+                window.location.href = `/board/${res.data.documentId}`;
+            }, 500);
         } catch (err) {
-            setError('Something went wrong. Please try again.');
+            setError(err?.response?.data?.message ?? 'Failed to accept invitation');
         }
     };
 

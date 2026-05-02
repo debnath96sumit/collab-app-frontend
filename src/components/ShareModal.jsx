@@ -51,12 +51,8 @@ const ShareModal = ({ document, onClose, activeCollaborators }) => {
                 email: inviteEmail,
                 role: inviteRole,
             });
-            if (response.statusCode === 201) {
-                setInviteEmail('');
-                pushToast(response.message, "success");
-            } else {
-                pushToast(response.message, "error");
-            }
+            setInviteEmail('');
+            pushToast({ message: response.message, type: 'success' });
         } catch (error) {
             console.log(error);
             setInviteError(error?.response?.data?.message ?? 'Failed to send invite');
@@ -83,14 +79,10 @@ const ShareModal = ({ document, onClose, activeCollaborators }) => {
                 linkAccess: newAccess,
                 linkPermission,
             });
-
-            if (response.statusCode === 200) {
-                pushToast(response.message, "success");
-            } else {
-                pushToast(response.message, "error");
-            }
+            pushToast({ message: response.message, type: 'success' });
         } catch (error) {
             console.error('Failed to update link settings:', error);
+            setLinkAccess(document?.linkAccess ?? 'restricted');
         } finally {
             setLinkSettingsLoading(false);
         }
@@ -103,48 +95,36 @@ const ShareModal = ({ document, onClose, activeCollaborators }) => {
                 linkAccess,
                 linkPermission: newPermission,
             });
-
-            if (response.statusCode === 200) {
-                pushToast(response.message, "success");
-            } else {
-                pushToast(response.message, "error");
-            }
+            pushToast({ message: response.message, type: 'success' });
         } catch (error) {
             console.error('Failed to update link permission:', error);
+            setLinkPermission(document?.linkPermission ?? 'viewer');
         }
     };
 
     const handleRoleChange = async (collabId, newRole) => {
+        const previousCollaborators = collaborators;
+        setCollaborators((prev) =>
+            prev.map((c) => (c.id === collabId ? { ...c, role: newRole } : c)),
+        );
         try {
-            const response = await CollaboratorAPI.updateCollaboratorRole(document.id, collabId, { role: newRole });
-
-            if (response.statusCode === 200) {
-                setCollaborators((prev) =>
-                    prev.map((c) => (c.id === collabId ? { ...c, role: newRole } : c)),
-                );
-
-                pushToast(response.message, "success");
-            } else {
-                pushToast(response.message, "error");
-            }
+            const response = await CollaboratorAPI.updateCollaboratorRole(
+                document.id,
+                collabId,
+                { role: newRole }
+            );
+            pushToast({ message: response.message, type: 'success' });
         } catch (error) {
-            console.error('Failed to update role:', error);
-            pushToast(error.message, "error");
+            setCollaborators(previousCollaborators);
         }
     };
     const handleRemoveCollaborator = async (collabId) => {
         try {
             const response = await CollaboratorAPI.removeCollaborator(document.id, collabId);
-
-            if (response.statusCode === 200) {
-                setCollaborators((prev) => prev.filter((c) => c.id !== collabId));
-                pushToast(response.message, "success");
-            } else {
-                pushToast(response.message, "error");
-            }
+            setCollaborators((prev) => prev.filter((c) => c.id !== collabId));
+            pushToast({ message: response.message, type: 'success' });
         } catch (error) {
-            console.error('Failed to remove collaborator:', error);
-            pushToast(error.message, "error");
+            console.log(error);
         }
     };
 

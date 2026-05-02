@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import EditorHeader from '../components/editor/EditorHeader';
 import EditorSidebar from '../components/editor/EditorSidebar';
 import EditorToolbar from '../components/editor/EditorToolbar';
@@ -24,7 +24,7 @@ const Editor = () => {
         collaborators: []
     });
     const [socket, setSocket] = useState(null);
-
+    const socketRef = useRef(null)
     const [showShareModal, setShowShareModal] = useState(false);
     const [activeCollaborators, setActiveCollaborators] = useState([]);
     const [pendingCollaborators, setPendingCollaborators] = useState([]);
@@ -38,6 +38,7 @@ const Editor = () => {
             transports: ['websocket'],
         });
 
+        socketRef.current = socketInstance;
         setSocket(socketInstance);
 
         socketInstance.on('connect', async () => {
@@ -99,10 +100,10 @@ const Editor = () => {
 
     const debouncedEmit = useCallback(
         debounce((event, payload) => {
-            socket.emit(event, payload);
+            socketRef.current?.emit(event, payload);
             setSaveStatus('saved');
         }, 1000),
-        [socket]
+        []
     );
 
     const handleContentChange = (e) => {

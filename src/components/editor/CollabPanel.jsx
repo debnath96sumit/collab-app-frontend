@@ -32,12 +32,13 @@ const CollaboratorRow = ({ collab, isPending }) => {
                             className="w-full h-full object-cover"
                         />
                     ) : (
-                        getInitials(user?.fullName || user?.username)
+                        // getInitials(user?.fullName || user?.username)
+                        getInitials(user?.fullName || user?.username || collab?.invitedEmail)
                     )}
                 </div>
                 <div>
                     <p className="text-xs font-semibold text-on-surface">
-                        {user?.username || collab?.email}
+                        {user?.username || collab?.invitedEmail}
                     </p>
                     {isPending ? (
                         <p className="text-[10px] text-amber-400">Invitation sent</p>
@@ -58,6 +59,7 @@ const CollaboratorRow = ({ collab, isPending }) => {
 
 const CollabPanel = ({ activeCollaborators = [], pendingCollaborators = [], presence = [], isOpen, onClose }) => {
     const [activeTab, setActiveTab] = useState('active');
+    console.log('ppppppppp', pendingCollaborators);
 
     if (!isOpen) return null;
 
