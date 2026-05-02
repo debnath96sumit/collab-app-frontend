@@ -158,6 +158,8 @@ const Editor = () => {
         socket.emit('cursor-position', { documentId: document.id, position });
     };
 
+    const isOwner = user?.id === document?.owner_id;
+
     return (
         <div className="bg-background text-on-surface h-screen w-screen overflow-hidden flex flex-col">
             <EditorHeader
@@ -168,6 +170,7 @@ const Editor = () => {
                 isConnected={isConnected}
                 onShare={() => setShowShareModal(true)}
                 onToggleCollabPanel={() => setIsCollabPanelOpen(prev => !prev)}
+                isOwner={isOwner}
             />
 
             <div className="flex flex-1 overflow-hidden">

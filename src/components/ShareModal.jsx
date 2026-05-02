@@ -14,18 +14,6 @@ const roleBadgeStyles = {
 
 const roleOptions = ['editor', 'commenter', 'viewer'];
 
-/**
- * ShareModal — full share dialog for a document
- *
- * Props:
- * - document: { id, title, shareToken, linkAccess, linkPermission, collaborators }
- * - onClose: fn — closes the modal
- *
- * Sections:
- * 1. Invite people → POST /documents/:id/collaborators
- * 2. People with access → GET /documents/:id/collaborators (already on document)
- * 3. General access → PATCH /documents/:id/link-settings
- */
 const ShareModal = ({ document, onClose, activeCollaborators }) => {
     // ── Invite section state ─────────────────────────────────────────────────
     const [inviteEmail, setInviteEmail] = useState('');
@@ -90,6 +78,7 @@ const ShareModal = ({ document, onClose, activeCollaborators }) => {
 
     const handleLinkPermissionChange = async (newPermission) => {
         setLinkPermission(newPermission);
+        setLinkSettingsLoading(true);
         try {
             const response = await CollaboratorAPI.updateDocSettings(document.id, {
                 linkAccess,
@@ -99,6 +88,8 @@ const ShareModal = ({ document, onClose, activeCollaborators }) => {
         } catch (error) {
             console.error('Failed to update link permission:', error);
             setLinkPermission(document?.linkPermission ?? 'viewer');
+        } finally {
+            setLinkSettingsLoading(false);
         }
     };
 
@@ -132,6 +123,12 @@ const ShareModal = ({ document, onClose, activeCollaborators }) => {
 
     return (
         <ModalWrapper onClose={onClose}>
+            {linkSettingsLoading && (
+                <div className="absolute top-0 left-0 right-0 h-1 overflow-hidden rounded-t-xl z-20">
+                    <div className="absolute top-0 h-full bg-primary animate-progress"></div>
+                </div>
+            )}
+
             {/* ── Header ── */}
             <div className="flex items-center justify-between mb-6 flex-shrink-0">
                 <h2 className="text-xl font-headline font-bold text-on-surface">

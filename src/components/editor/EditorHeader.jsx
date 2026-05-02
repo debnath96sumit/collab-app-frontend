@@ -11,6 +11,7 @@ const EditorHeader = ({
     isConnected,
     onShare,
     onToggleCollabPanel,
+    isOwner,
 }) => {
     const navigate = useNavigate();
 
@@ -36,8 +37,10 @@ const EditorHeader = ({
                         type="text"
                         value={title || ''}
                         onChange={(e) => onTitleChange(e.target.value)}
+                        readOnly={!isOwner}
                         placeholder="Untitled Document"
-                        className="bg-transparent border-none focus:ring-0 text-slate-200 font-semibold text-base p-1 w-64 outline-none focus:bg-slate-800/40 rounded-lg transition-colors placeholder:text-slate-600"
+                        className={`bg-transparent border-none focus:ring-0 text-slate-200 font-semibold text-base p-1 w-64 outline-none rounded-lg transition-colors placeholder:text-slate-600 ${isOwner ? 'focus:bg-slate-800/40 cursor-text' : 'cursor-default'
+                            }`}
                     />
                 </div>
             </div>
@@ -58,15 +61,17 @@ const EditorHeader = ({
                     </span>
                 </div>
 
-                <button
-                    onClick={onShare}
-                    className="bg-primary-container text-on-primary-container px-5 py-2 rounded-lg font-bold text-sm hover:bg-blue-600 transition-colors active:scale-95"
-                >
-                    <span className="flex items-center gap-2">
-                        <Share2 size={15} />
-                        Share
-                    </span>
-                </button>
+                {isOwner && (
+                    <button
+                        onClick={onShare}
+                        className="bg-primary-container text-on-primary-container px-5 py-2 rounded-lg font-bold text-sm hover:bg-blue-600 transition-colors active:scale-95"
+                    >
+                        <span className="flex items-center gap-2">
+                            <Share2 size={15} />
+                            Share
+                        </span>
+                    </button>
+                )}
 
                 <button
                     onClick={onToggleCollabPanel}

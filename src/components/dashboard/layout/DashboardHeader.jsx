@@ -12,8 +12,8 @@ const DashboardHeader = ({ searchQuery, onSearchChange }) => {
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
 
-    const handleLogout = () => {
-        logout();
+    const handleLogout = async () => {
+        await logout();
         navigate('/');
     };
 

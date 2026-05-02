@@ -41,7 +41,7 @@ const navItems = [
 ];
 
 const SettingsBody = () => {
-    const { user } = useAuth();
+    const { user, updateProfileDetails } = useAuth();
     const [activeSection, setActiveSection] = useState('profile');
     const [showOldPassword, setShowOldPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
@@ -74,7 +74,6 @@ const SettingsBody = () => {
         }
         setAvatarFile(file);
         setAvatarPreview(URL.createObjectURL(file));
-        isProfileDirty = true;
     };
 
     const {
@@ -108,21 +107,21 @@ const SettingsBody = () => {
             formData.append('fullName', data.fullName);
             formData.append('username', data.username);
             formData.append('email', data.email);
-
             if (avatarFile) {
                 formData.append('avatar', avatarFile);
             }
 
-            const res = await UserAPI.updateProfile(formData);
-            pushToast({ message: res.message, type: 'success' });
-            resetProfileForm({
-                fullName: res.data.fullName,
-                email: res.data.email,
-                username: res.data.username,
-            });
-            setAvatarFile(null);
-        } catch (error) {
-            console.error('Failed to update profile:', error);
+            const res = await updateProfileDetails(formData);
+            if (res.success) {
+                pushToast({ message: 'Profile updated', type: 'success' });
+                resetProfileForm({
+                    fullName: user.fullName,
+                    email: user.email,
+                    username: user.username,
+                });
+                setAvatarFile(null);
+                setAvatarPreview(null);
+            }
         } finally {
             setProfileLoading(false);
         }
@@ -264,7 +263,7 @@ const SettingsBody = () => {
                             <div className="mt-8 pt-8 border-t border-outline-variant/10 flex justify-end">
                                 <button
                                     type="submit"
-                                    disabled={profileLoading || !isProfileDirty}
+                                    disabled={profileLoading || (!isProfileDirty && !avatarFile)}
                                     className="bg-gradient-to-br from-primary-fixed-dim to-primary-container text-on-primary-container font-semibold py-3 px-8 rounded-xl shadow-lg hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
                                 >
                                     {profileLoading ? 'Saving...' : 'Save Changes'}
