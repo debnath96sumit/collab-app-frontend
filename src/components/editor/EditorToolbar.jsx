@@ -1,88 +1,129 @@
 import {
-    Bold,
-    Italic,
-    Underline,
-    Heading1,
-    Heading2,
-    List,
-    ListOrdered,
-    Link,
-    Image,
+    Bold, Italic, Underline as UnderlineIcon, Heading1, Heading2,
+    List, ListOrdered, Link as LinkIcon, Undo, Redo,
 } from 'lucide-react';
 
-/**
- * EditorToolbar — floating formatting toolbar above the editor canvas
- *
- * For MVP this is visual only — buttons don't apply formatting yet.
- * Real formatting requires either:
- * - document.execCommand (deprecated but simple)
- * - A rich text library like TipTap or Quill
- *
- * For now render the buttons and wire them up later.
- *
- * Props:
- * - onFormat: fn(formatType) — called when a format button is clicked
- *   formatType: 'bold' | 'italic' | 'underline' | 'h1' | 'h2' | 'ul' | 'ol' | 'link' | 'image'
- *
- * Implementation notes:
- * - TODO: call document.execCommand(formatType) inside onFormat handler in Editor.jsx
- *   Example: document.execCommand('bold') toggles bold on selected text
- * - Each button group is separated by a divider
- */
-
-const ToolbarButton = ({ icon: Icon, label, onClick }) => (
+const ToolbarButton = ({ onClick, active, disabled, icon: Icon, label }) => (
     <button
-        onClick={onClick}
+        onMouseDown={(e) => {
+            e.preventDefault();
+            onClick?.();
+        }}
+        disabled={disabled}
         title={label}
-        className="p-2 hover:bg-surface-bright rounded-lg text-on-surface-variant hover:text-on-surface transition-colors active:scale-95"
+        className={`p-2 rounded-lg transition-colors active:scale-95 ${active
+            ? 'bg-primary/20 text-primary'
+            : 'hover:bg-surface-bright text-on-surface-variant hover:text-on-surface'
+            } disabled:opacity-30 disabled:cursor-not-allowed`}
     >
         <Icon size={16} />
     </button>
 );
 
-const Divider = () => (
-    <div className="w-px h-5 bg-outline-variant/20 mx-1" />
-);
+const Divider = () => <div className="w-px h-5 bg-outline-variant/20 mx-1" />;
 
-const EditorToolbar = ({ onFormat }) => {
+const EditorToolbar = ({ editor }) => {
+    if (!editor) return null;
+
+    const handleLink = (e) => {
+        e.preventDefault();
+        const url = window.prompt('Enter URL');
+        if (url) {
+            editor.chain().focus().setLink({ href: url }).run();
+        } else {
+            editor.chain().focus().unsetLink().run();
+        }
+    };
+
     return (
-        <div className="mt-6 mb-4 z-10 flex items-center gap-1 p-1.5 bg-surface-container-high/80 backdrop-blur-md rounded-xl shadow-2xl border border-outline-variant/10">
+        <div className="mt-6 mb-4 z-10 flex items-center gap-1 p-1.5 bg-surface-container-high/80 backdrop-blur-md rounded-xl shadow-2xl border border-outline-variant/10 flex-wrap">
 
-            {/* ── Text formatting group ── */}
+            {/* Undo / Redo */}
             <div className="flex items-center px-1">
-                {/*
-         * TODO: onClick → onFormat('bold')
-         * In Editor.jsx: onFormat = (type) => document.execCommand(type)
-         */}
-                <ToolbarButton icon={Bold} label="Bold" onClick={() => onFormat?.('bold')} />
-                <ToolbarButton icon={Italic} label="Italic" onClick={() => onFormat?.('italic')} />
-                <ToolbarButton icon={Underline} label="Underline" onClick={() => onFormat?.('underline')} />
+                <ToolbarButton
+                    icon={Undo}
+                    label="Undo"
+                    onClick={() => editor.chain().focus().undo().run()}
+                    disabled={!editor.can().undo()}
+                />
+                <ToolbarButton
+                    icon={Redo}
+                    label="Redo"
+                    onClick={() => editor.chain().focus().redo().run()}
+                    disabled={!editor.can().redo()}
+                />
             </div>
 
             <Divider />
 
-            {/* ── Heading + list group ── */}
+            {/* Text formatting */}
             <div className="flex items-center px-1">
-                {/*
-         * TODO: H1 and H2 need formatBlock command not execCommand
-         * document.execCommand('formatBlock', false, 'h1')
-         */}
-                <ToolbarButton icon={Heading1} label="Heading 1" onClick={() => onFormat?.('h1')} />
-                <ToolbarButton icon={Heading2} label="Heading 2" onClick={() => onFormat?.('h2')} />
-                <ToolbarButton icon={List} label="Bullet List" onClick={() => onFormat?.('ul')} />
-                <ToolbarButton icon={ListOrdered} label="Numbered List" onClick={() => onFormat?.('ol')} />
+                <ToolbarButton
+                    icon={Bold}
+                    label="Bold"
+                    active={editor.isActive('bold')}
+                    onClick={() => editor.chain().focus().toggleBold().run()}
+                />
+                <ToolbarButton
+                    icon={Italic}
+                    label="Italic"
+                    active={editor.isActive('italic')}
+                    onClick={() => editor.chain().focus().toggleItalic().run()}
+                />
+                <ToolbarButton
+                    icon={UnderlineIcon}
+                    label="Underline"
+                    active={editor.isActive('underline')}
+                    onClick={() => editor.chain().focus().toggleUnderline().run()}
+                />
             </div>
 
             <Divider />
 
-            {/* ── Insert group ── */}
+            {/* Headings */}
             <div className="flex items-center px-1">
-                {/*
-         * TODO: Link → prompt user for URL, then execCommand('createLink', false, url)
-         * TODO: Image → for MVP skip or open file picker
-         */}
-                <ToolbarButton icon={Link} label="Insert Link" onClick={() => onFormat?.('link')} />
-                <ToolbarButton icon={Image} label="Insert Image" onClick={() => onFormat?.('image')} />
+                <ToolbarButton
+                    icon={Heading1}
+                    label="Heading 1"
+                    active={editor.isActive('heading', { level: 1 })}
+                    onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+                />
+                <ToolbarButton
+                    icon={Heading2}
+                    label="Heading 2"
+                    active={editor.isActive('heading', { level: 2 })}
+                    onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+                />
+            </div>
+
+            <Divider />
+
+            {/* Lists */}
+            <div className="flex items-center px-1">
+                <ToolbarButton
+                    icon={List}
+                    label="Bullet List"
+                    active={editor.isActive('bulletList')}
+                    onClick={() => editor.chain().focus().toggleBulletList().run()}
+                />
+                <ToolbarButton
+                    icon={ListOrdered}
+                    label="Numbered List"
+                    active={editor.isActive('orderedList')}
+                    onClick={() => editor.chain().focus().toggleOrderedList().run()}
+                />
+            </div>
+
+            <Divider />
+
+            {/* Link */}
+            <div className="flex items-center px-1">
+                <ToolbarButton
+                    icon={LinkIcon}
+                    label={editor.isActive('link') ? 'Remove Link' : 'Insert Link'}
+                    active={editor.isActive('link')}
+                    onClick={handleLink}
+                />
             </div>
         </div>
     );

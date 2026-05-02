@@ -31,6 +31,12 @@ const Editor = () => {
     const [cursors, setCursors] = useState({});
     const typingStopTimer = useRef(null);
     const isTypingRef = useRef(false);
+    const [editorInstance, setEditorInstance] = useState(null);
+
+    const handleEditorReady = (editorInstance) => {
+        setEditorInstance(editorInstance);
+    };
+
     const fetchCollaborators = useCallback(async () => {
         try {
             const collaborator_resp = await CollaboratorAPI.getAllCollaborators(id);
@@ -129,10 +135,8 @@ const Editor = () => {
         []
     );
 
-    const handleContentChange = (e) => {
-        const newContent = e.target.value;
-
-        setDocument(prev => ({ ...prev, content: newContent }));
+    const handleContentChange = (htmlContent) => {
+        setDocument(prev => ({ ...prev, content: htmlContent }));
         setSaveStatus('saving');
 
         if (!isTypingRef.current) {
@@ -147,7 +151,7 @@ const Editor = () => {
             socketRef.current?.emit('typing-stop', { documentId: document.id });
         }, 2000);
 
-        debouncedEmit('editDocument', { docId: document.id, content: newContent });
+        debouncedEmit('editDocument', { docId: document.id, content: htmlContent });
     };
 
     const handleTitleChange = (newTitle) => {
@@ -182,12 +186,13 @@ const Editor = () => {
 
             <div className="flex flex-1 overflow-hidden relative">
                 <main className="flex-1 bg-surface-dim flex flex-col items-center overflow-hidden relative">
-                    <EditorToolbar />
+                    <EditorToolbar editor={editorInstance} />
                     <div className="flex-1 w-full max-w-4xl px-4 sm:px-12 overflow-y-auto relative custom-scrollbar">
                         <EditorCanvas
                             content={document.content}
                             onChange={handleContentChange}
                             onCursorMove={handleCursorMove}
+                            onEditorReady={handleEditorReady}
                         />
                     </div>
                 </main>
