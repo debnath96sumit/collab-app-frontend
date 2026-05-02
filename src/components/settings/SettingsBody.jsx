@@ -145,311 +145,322 @@ const SettingsBody = () => {
     };
 
     return (
-        <div className="max-w-5xl mx-auto px-6 py-8">
-            <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-10 items-start">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+            <div className="flex flex-col lg:grid lg:grid-cols-[240px_1fr] gap-6 lg:gap-10 items-start">
 
-                {/* ── Settings nav ── */}
-                <nav className="flex flex-col gap-2 sticky top-6">
-                    {navItems.map(({ icon: Icon, label, id }) => (
-                        <button
-                            key={id}
-                            onClick={() => setActiveSection(id)}
-                            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors ${activeSection === id
-                                ? 'bg-surface-container-highest text-primary font-semibold shadow-sm'
-                                : 'text-on-surface-variant hover:bg-surface-container-high'
-                                }`}
-                        >
-                            <Icon size={18} />
-                            <span className="text-sm">{label}</span>
-                        </button>
-                    ))}
+                <nav className="w-full lg:sticky lg:top-6">
+                    <div className="flex lg:hidden overflow-x-auto gap-2 pb-1 scrollbar-hide">
+                        {navItems.map(({ icon: Icon, label, id }) => (
+                            <button
+                                key={id}
+                                onClick={() => setActiveSection(id)}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap flex-shrink-0 transition-colors ${activeSection === id
+                                    ? 'bg-surface-container-highest text-primary font-semibold shadow-sm'
+                                    : 'text-on-surface-variant bg-surface-container-high hover:bg-surface-container-highest'
+                                    }`}
+                            >
+                                <Icon size={15} />
+                                {label}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="hidden lg:flex flex-col gap-2">
+                        {navItems.map(({ icon: Icon, label, id }) => (
+                            <button
+                                key={id}
+                                onClick={() => setActiveSection(id)}
+                                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors ${activeSection === id
+                                    ? 'bg-surface-container-highest text-primary font-semibold shadow-sm'
+                                    : 'text-on-surface-variant hover:bg-surface-container-high'
+                                    }`}
+                            >
+                                <Icon size={18} />
+                                <span className="text-sm">{label}</span>
+                            </button>
+                        ))}
+                    </div>
                 </nav>
 
-                {/* ── Settings content ── */}
-                <div className="flex flex-col gap-10 pb-24">
+                <div className="flex flex-col gap-10 pb-24 w-full">
+                    {activeSection === 'profile' && (
+                        <section className={sectionClass}>
+                            <form onSubmit={handleProfileSubmit(onProfileSubmit)}>
+                                <div className="flex items-center gap-4 mb-8">
+                                    <User size={20} className="text-primary" />
+                                    <h3 className="text-xl font-headline font-bold text-on-surface">
+                                        Profile Information
+                                    </h3>
+                                </div>
 
-                    {/* Profile section */}
-                    {activeSection === 'profile' && <section className={sectionClass}>
-                        <form onSubmit={handleProfileSubmit(onProfileSubmit)}>
-                            <div className="flex items-center gap-4 mb-8">
-                                <User size={20} className="text-primary" />
-                                <h3 className="text-xl font-headline font-bold text-on-surface">
-                                    Profile Information
-                                </h3>
-                            </div>
+                                <div className="flex flex-col md:flex-row gap-8 items-start">
+                                    {/* Avatar */}
+                                    <div className="flex flex-col items-center gap-3 flex-shrink-0 self-center md:self-start">
+                                        <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-full overflow-visible">
+                                            <div className="w-full h-full rounded-full border-4 border-surface-container-highest bg-primary-container flex items-center justify-center text-4xl font-bold text-on-primary-container overflow-hidden">
+                                                {avatarPreview || user?.avatarUrl ? (
+                                                    <img src={avatarPreview || user?.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    user?.fullName?.[0]?.toUpperCase() ?? 'U'
+                                                )}
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => document.getElementById('profile-upload').click()}
+                                                disabled={profileLoading}
+                                                className="absolute bottom-0 right-0 bg-purple-600 rounded-full p-2 text-white hover:bg-purple-700 transition-colors disabled:opacity-50 shadow-md"
+                                            >
+                                                <Camera size={14} />
+                                            </button>
+                                            <input
+                                                id="profile-upload"
+                                                type="file"
+                                                accept="image/*"
+                                                className="hidden"
+                                                onChange={handleFileChange}
+                                            />
+                                        </div>
+                                        <span className="text-xs text-on-surface-variant">
+                                            Click camera icon to upload
+                                        </span>
+                                    </div>
 
-                            <div className="flex flex-col md:flex-row gap-10 items-start">
-                                <div className="flex flex-col items-center gap-3 flex-shrink-0">
-                                    <div className="relative w-32 h-32 rounded-full overflow-visible">
-                                        <div className="w-full h-full rounded-full border-4 border-surface-container-highest bg-primary-container flex items-center justify-center text-4xl font-bold text-on-primary-container overflow-hidden">
-                                            {avatarPreview || user?.avatarUrl ? (
-                                                <img src={avatarPreview || user?.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-                                            ) : (
-                                                user?.fullName?.[0]?.toUpperCase() ?? 'U'
+                                    {/* Fields */}
+                                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-5 w-full">
+                                        <div className="flex flex-col gap-2">
+                                            <label className="text-xs font-label text-on-surface-variant px-1">
+                                                Full Name
+                                            </label>
+                                            <input
+                                                type="text"
+                                                {...registerProfile("fullName")}
+                                                className={inputClass}
+                                            />
+                                            {profileErrors.fullName && (
+                                                <p className="text-xs text-error px-1">
+                                                    {profileErrors.fullName.message}
+                                                </p>
                                             )}
                                         </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => document.getElementById('profile-upload').click()}
-                                            disabled={profileLoading}
-                                            className="absolute bottom-0 right-0 bg-purple-600 rounded-full p-2 text-white hover:bg-purple-700 transition-colors disabled:opacity-50 shadow-md"
-                                        >
-                                            <Camera size={14} />
-                                        </button>
-                                        <input
-                                            id="profile-upload"
-                                            type="file"
-                                            accept="image/*"
-                                            className="hidden"
-                                            onChange={handleFileChange}
-                                        />
-                                    </div>
-                                    <span className="text-xs text-on-surface-variant">
-                                        Click camera icon to upload
-                                    </span>
-                                </div>
 
-                                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-xs font-label text-on-surface-variant px-1">
-                                            Full Name
-                                        </label>
-                                        <input
-                                            type="text"
-                                            {...registerProfile("fullName")}
-                                            className={inputClass}
-                                        />
-                                        {profileErrors.fullName && (
-                                            <p className="text-xs text-error px-1">
-                                                {profileErrors.fullName.message}
-                                            </p>
-                                        )}
-                                    </div>
+                                        <div className="flex flex-col gap-2">
+                                            <label className="text-xs font-label text-on-surface-variant px-1">
+                                                Username
+                                            </label>
+                                            <input
+                                                type="text"
+                                                {...registerProfile("username")}
+                                                className={inputClass}
+                                            />
+                                            {profileErrors.username && (
+                                                <p className="text-xs text-error px-1">
+                                                    {profileErrors.username.message}
+                                                </p>
+                                            )}
+                                        </div>
 
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-xs font-label text-on-surface-variant px-1">
-                                            Username
-                                        </label>
-                                        <input
-                                            type="text"
-                                            {...registerProfile("username")}
-                                            className={inputClass}
-                                        />
-                                        {profileErrors.username && (
-                                            <p className="text-xs text-error px-1">
-                                                {profileErrors.username.message}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div className="flex flex-col gap-2 md:col-span-2">
-                                        <label className="text-xs font-label text-on-surface-variant px-1">
-                                            Email Address
-                                        </label>
-                                        <input
-                                            type="email"
-                                            {...registerProfile("email")}
-                                            className={inputClass}
-                                        />
-                                        {profileErrors.email && (
-                                            <p className="text-xs text-error px-1">
-                                                {profileErrors.email.message}
-                                            </p>
-                                        )}
+                                        <div className="flex flex-col gap-2 sm:col-span-2">
+                                            <label className="text-xs font-label text-on-surface-variant px-1">
+                                                Email Address
+                                            </label>
+                                            <input
+                                                type="email"
+                                                {...registerProfile("email")}
+                                                className={inputClass}
+                                            />
+                                            {profileErrors.email && (
+                                                <p className="text-xs text-error px-1">
+                                                    {profileErrors.email.message}
+                                                </p>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <div className="mt-8 pt-8 border-t border-outline-variant/10 flex justify-end">
-                                <button
-                                    type="submit"
-                                    disabled={profileLoading || (!isProfileDirty && !avatarFile)}
-                                    className="bg-gradient-to-br from-primary-fixed-dim to-primary-container text-on-primary-container font-semibold py-3 px-8 rounded-xl shadow-lg hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
-                                >
-                                    {profileLoading ? 'Saving...' : 'Save Changes'}
-                                </button>
-                            </div>
-                        </form>
+                                <div className="mt-8 pt-6 border-t border-outline-variant/10 flex justify-end">
+                                    <button
+                                        type="submit"
+                                        disabled={profileLoading || (!isProfileDirty && !avatarFile)}
+                                        className="bg-gradient-to-br from-primary-fixed-dim to-primary-container text-on-primary-container font-semibold py-3 px-8 rounded-xl shadow-lg hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
+                                    >
+                                        {profileLoading ? 'Saving...' : 'Save Changes'}
+                                    </button>
+                                </div>
+                            </form>
+                        </section>
+                    )}
 
-                    </section>}
+                    {activeSection === 'security' && (
+                        <section className={sectionClass}>
+                            <form onSubmit={handlePasswordSubmit(onPasswordSubmit)}>
+                                <div className="flex items-center gap-4 mb-8">
+                                    <Lock size={20} className="text-primary" />
+                                    <h3 className="text-xl font-headline font-bold text-on-surface">
+                                        Security & Password
+                                    </h3>
+                                </div>
 
-                    {/* Security section */}
-                    {activeSection === 'security' && <section className={sectionClass}>
-                        <form onSubmit={handlePasswordSubmit(onPasswordSubmit)}>
+                                <div className="grid grid-cols-1 gap-6">
+                                    <div className="flex flex-col gap-2">
+                                        <label className="text-xs font-label text-on-surface-variant px-1">
+                                            Current Password
+                                        </label>
+                                        <div className="relative">
+                                            <input
+                                                type={showOldPassword ? 'text' : 'password'}
+                                                {...registerPassword('currentPassword')}
+                                                placeholder="••••••••••••"
+                                                className={inputClass}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowOldPassword(!showOldPassword)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant"
+                                            >
+                                                {showOldPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                                            </button>
+                                        </div>
+                                        {passwordErrors.currentPassword && (
+                                            <p className="text-xs text-error px-1">
+                                                {passwordErrors.currentPassword.message}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                        <div className="flex flex-col gap-2">
+                                            <label className="text-xs font-label text-on-surface-variant px-1">
+                                                New Password
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    type={showNewPassword ? 'text' : 'password'}
+                                                    {...registerPassword('newPassword')}
+                                                    className={inputClass}
+                                                    placeholder="••••••••••••"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowNewPassword(!showNewPassword)}
+                                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant"
+                                                >
+                                                    {showNewPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                                                </button>
+                                            </div>
+                                            {passwordErrors.newPassword && (
+                                                <p className="text-xs text-error px-1">
+                                                    {passwordErrors.newPassword.message}
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        <div className="flex flex-col gap-2">
+                                            <label className="text-xs font-label text-on-surface-variant px-1">
+                                                Confirm New Password
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    type={showConfirmPassword ? 'text' : 'password'}
+                                                    {...registerPassword('confirmPassword')}
+                                                    className={inputClass}
+                                                    placeholder="••••••••••••"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant"
+                                                >
+                                                    {showConfirmPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                                                </button>
+                                            </div>
+                                            {passwordErrors.confirmPassword && (
+                                                <p className="text-xs text-error px-1">
+                                                    {passwordErrors.confirmPassword.message}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="mt-8 pt-6 border-t border-outline-variant/10 flex justify-end">
+                                    <button
+                                        type="submit"
+                                        disabled={passwordLoading || !isPasswordValid}
+                                        className="border border-primary-container/30 text-primary hover:bg-primary-container/10 font-semibold py-3 px-8 rounded-xl active:scale-95 transition-all disabled:opacity-50 text-sm"
+                                    >
+                                        {passwordLoading ? 'Updating...' : 'Update Password'}
+                                    </button>
+                                </div>
+                            </form>
+                        </section>
+                    )}
+
+                    {activeSection === 'preferences' && (
+                        <section className={sectionClass}>
                             <div className="flex items-center gap-4 mb-8">
-                                <Lock size={20} className="text-primary" />
+                                <Bell size={20} className="text-primary" />
                                 <h3 className="text-xl font-headline font-bold text-on-surface">
-                                    Security & Password
+                                    Notification Preferences
                                 </h3>
                             </div>
 
-                            <div className="grid grid-cols-1 gap-6 max-w-xl">
-                                <div className="flex flex-col gap-2">
-                                    <label className="text-xs font-label text-on-surface-variant px-1">
-                                        Current Password
-                                    </label>
-                                    <div className="relative">
-                                        <input
-                                            type={showOldPassword ? 'text' : 'password'}
-                                            name="currentPassword"
-                                            {...registerPassword('currentPassword')}
-                                            placeholder="••••••••••••"
-                                            className={inputClass}
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowOldPassword(!showOldPassword)}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant"
-                                        >
-                                            {showOldPassword ? <Eye size={18} /> : <EyeOff size={18} />}
-                                        </button>
-                                    </div>
-                                    {passwordErrors.currentPassword && (
-                                        <p className="text-xs text-error px-1">
-                                            {passwordErrors.currentPassword}
-                                        </p>
-                                    )}
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-xs font-label text-on-surface-variant px-1">
-                                            New Password
-                                        </label>
-                                        <div className="relative">
-                                            <input
-                                                type={showNewPassword ? 'text' : 'password'}
-                                                name="newPassword"
-                                                {...registerPassword('newPassword')}
-                                                className={inputClass}
-                                                placeholder="••••••••••••"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowNewPassword(!showNewPassword)}
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant"
-                                            >
-                                                {showNewPassword ? <Eye size={18} /> : <EyeOff size={18} />}
-                                            </button>
-                                        </div>
-                                        {passwordErrors.newPassword && (
-                                            <p className="text-xs text-error px-1">
-                                                {passwordErrors.newPassword}
-                                            </p>
-                                        )}
-                                    </div>
-                                    <div className="flex flex-col gap-2">
-                                        <label className="text-xs font-label text-on-surface-variant px-1">
-                                            Confirm New Password
-                                        </label>
-                                        <div className="relative">
-                                            <input
-                                                type={showConfirmPassword ? 'text' : 'password'}
-                                                name="confirmPassword"
-                                                {...registerPassword('confirmPassword')}
-                                                className={inputClass}
-                                                placeholder="••••••••••••"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant"
-                                            >
-                                                {showConfirmPassword ? <Eye size={18} /> : <EyeOff size={18} />}
-                                            </button>
-                                        </div>
-                                        {passwordErrors.confirmPassword && (
-                                            <p className="text-xs text-error px-1">
-                                                {passwordErrors.confirmPassword}
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="mt-8 pt-8 border-t border-outline-variant/10 flex justify-end">
-                                <button
-                                    type="submit"
-                                    disabled={passwordLoading || !isPasswordValid}
-                                    className="border border-primary-container/30 text-primary hover:bg-primary-container/10 font-semibold py-3 px-8 rounded-xl active:scale-95 transition-all disabled:opacity-50 text-sm"
-                                >
-                                    {passwordLoading ? 'Updating...' : 'Update Password'}
-                                </button>
-                            </div>
-                        </form>
-                    </section>}
-
-                    {/* Preferences section */}
-                    {activeSection === 'preferences' && <section className={sectionClass}>
-                        <div className="flex items-center gap-4 mb-8">
-                            <Bell size={20} className="text-primary" />
-                            <h3 className="text-xl font-headline font-bold text-on-surface">
-                                Notification Preferences
-                            </h3>
-                        </div>
-
-                        <div className="space-y-4">
-                            {/*
-                     * TODO: wire each toggle to preferences state
-                     * and persist via UserAPI.updatePreferences()
-                     */}
-                            {[
-                                {
-                                    key: 'emailNotifications',
-                                    label: 'Email Notifications',
-                                    desc: 'Receive daily summaries and activity alerts',
-                                },
-                                {
-                                    key: 'documentMentions',
-                                    label: 'Document Mentions',
-                                    desc: 'Get notified immediately when someone tags you',
-                                },
-                                {
-                                    key: 'directMessages',
-                                    label: 'Direct Messages',
-                                    desc: 'Allow team members to send you private messages',
-                                },
-                            ].map(({ key, label, desc }) => (
-                                <div
-                                    key={key}
-                                    className="flex items-center justify-between p-4 rounded-2xl hover:bg-surface-container-highest/30 transition-colors"
-                                >
-                                    <div className="flex flex-col">
-                                        <span className="text-on-surface font-semibold text-sm">{label}</span>
-                                        <span className="text-xs text-on-surface-variant">{desc}</span>
-                                    </div>
+                            <div className="space-y-2">
+                                {[
+                                    {
+                                        key: 'emailNotifications',
+                                        label: 'Email Notifications',
+                                        desc: 'Receive daily summaries and activity alerts',
+                                    },
+                                    {
+                                        key: 'documentMentions',
+                                        label: 'Document Mentions',
+                                        desc: 'Get notified immediately when someone tags you',
+                                    },
+                                    {
+                                        key: 'directMessages',
+                                        label: 'Direct Messages',
+                                        desc: 'Allow team members to send you private messages',
+                                    },
+                                ].map(({ key, label, desc }) => (
                                     <div
-                                        onClick={() =>
-                                            setPreferences((prev) => ({ ...prev, [key]: !prev[key] }))
-                                        }
+                                        key={key}
+                                        className="flex items-center justify-between p-4 rounded-2xl hover:bg-surface-container-highest/30 transition-colors"
                                     >
-                                        <Toggle isOn={preferences[key]} />
+                                        <div className="flex flex-col pr-4">
+                                            <span className="text-on-surface font-semibold text-sm">{label}</span>
+                                            <span className="text-xs text-on-surface-variant">{desc}</span>
+                                        </div>
+                                        <div
+                                            className="flex-shrink-0"
+                                            onClick={() =>
+                                                setPreferences((prev) => ({ ...prev, [key]: !prev[key] }))
+                                            }
+                                        >
+                                            <Toggle isOn={preferences[key]} />
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
-                    </section>}
+                                ))}
+                            </div>
+                        </section>
+                    )}
 
-                    {/* Danger zone (shown under billing) */}
-                    {activeSection === 'billing' && <section className="bg-error-container/10 border border-error-container/20 rounded-3xl p-8">
-                        <div className="flex items-center gap-4 mb-4">
-                            <AlertTriangle size={20} className="text-error" />
-                            <h3 className="text-xl font-headline font-bold text-on-surface">
-                                Danger Zone
-                            </h3>
-                        </div>
-                        <p className="text-sm text-on-surface-variant mb-6">
-                            Permanently delete your account and all associated document data.
-                            This action is irreversible.
-                        </p>
-                        {/*
-                   * TODO: onClick → show confirmation modal before deleting
-                   * Call UserAPI.deleteAccount() only after user confirms
-                   */}
-                        <button className="text-error font-semibold hover:underline text-sm px-1">
-                            Delete Account...
-                        </button>
-                    </section>}
+                    {activeSection === 'billing' && (
+                        <section className="bg-error-container/10 border border-error-container/20 rounded-3xl p-6 sm:p-8">
+                            <div className="flex items-center gap-4 mb-4">
+                                <AlertTriangle size={20} className="text-error" />
+                                <h3 className="text-xl font-headline font-bold text-on-surface">
+                                    Danger Zone
+                                </h3>
+                            </div>
+                            <p className="text-sm text-on-surface-variant mb-6">
+                                Permanently delete your account and all associated document data.
+                                This action is irreversible.
+                            </p>
+                            <button className="text-error font-semibold hover:underline text-sm px-1">
+                                Delete Account...
+                            </button>
+                        </section>
+                    )}
                 </div>
             </div>
         </div>

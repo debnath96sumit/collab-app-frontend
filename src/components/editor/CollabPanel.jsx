@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Clock, UserCheck } from 'lucide-react';
+import { X, Clock, UserCheck, Users } from 'lucide-react';
 import { getInitials } from '../../helpers';
 import { CollaboratorAPI } from '../../utils/api';
 import { pushToast } from '../../utils/toaster';
@@ -17,7 +17,6 @@ const TABS = [
 ];
 
 const CollaboratorRow = ({ collab, isPending, document, onRefresh }) => {
-
     const user = collab?.user;
     const avatarUrl = user?.avatarUrl;
 
@@ -33,28 +32,30 @@ const CollaboratorRow = ({ collab, isPending, document, onRefresh }) => {
             ? 'text-blue-400'
             : 'text-slate-500';
 
+    const dotColor = collab.isEditing
+        ? 'bg-green-400 animate-pulse'
+        : collab.isOnline
+            ? 'bg-blue-400'
+            : 'bg-slate-600';
+
     const handleRemoveCollaborator = async (collabId) => {
         try {
             const response = await CollaboratorAPI.removeCollaborator(document.id, collabId);
             pushToast({ message: response.message, type: 'success' });
             if (onRefresh) await onRefresh();
         } catch (error) {
-            console.log(error);
             pushToast({ message: 'Failed to remove collaborator', type: 'error' });
         }
     };
+
     return (
-        <div className="flex items-center justify-between group">
-            <div className="flex items-center gap-3">
-                {/* Avatar with online dot */}
+        <div className="flex items-center justify-between p-3 rounded-xl bg-surface-container-high/50 hover:bg-surface-container-high border border-outline-variant/10 hover:border-outline-variant/25 transition-all duration-200 group">
+            <div className="flex items-center gap-3 min-w-0">
                 <div className="relative flex-shrink-0">
                     <div
-                        className="w-8 h-8 rounded-full flex items-center justify-center 
-                          text-[11px] font-bold text-white overflow-hidden"
+                        className="w-9 h-9 rounded-full flex items-center justify-center text-[11px] font-bold text-white overflow-hidden ring-2 ring-surface-container"
                         style={{
-                            backgroundColor: avatarUrl
-                                ? 'transparent'
-                                : (collab.color || '#6366f1')
+                            backgroundColor: avatarUrl ? 'transparent' : (collab.color || '#6366f1')
                         }}
                     >
                         {avatarUrl ? (
@@ -68,46 +69,39 @@ const CollaboratorRow = ({ collab, isPending, document, onRefresh }) => {
                         )}
                     </div>
 
-                    {/* Online/editing dot — only for active collaborators */}
-                    {!isPending && (
-                        <span className={`absolute bottom-0 right-0 w-2 h-2 rounded-full 
-                          border border-surface-container ring-1 ring-surface-container
-                          ${collab.isEditing
-                                ? 'bg-green-400 animate-pulse'
-                                : collab.isOnline
-                                    ? 'bg-blue-400'
-                                    : 'bg-slate-600'
-                            }`}
-                        />
+                    {!isPending ? (
+                        <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-surface-container ${dotColor}`} />
+                    ) : (
+                        <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-surface-container bg-amber-400" />
                     )}
                 </div>
 
-                <div>
-                    <p className="text-xs font-semibold text-on-surface">
+                <div className="min-w-0">
+                    <p className="text-xs font-semibold text-on-surface truncate">
                         {user?.username || collab?.invitedEmail}
                     </p>
                     {isPending ? (
                         <p className="text-[10px] text-amber-400">Invitation sent</p>
                     ) : (
-                        <p className={`text-[10px] ${statusColor}`}>
-                            {statusLabel}
-                        </p>
+                        <p className={`text-[10px] ${statusColor}`}>{statusLabel}</p>
                     )}
                 </div>
             </div>
 
-            <div className="flex items-center gap-2">
-                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold capitalize 
-                  ${roleBadgeStyles[collab.role] ?? roleBadgeStyles.viewer}`}>
+            {/* Role badge + remove button */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+                <span className={`text-[10px] px-2 py-1 rounded-lg font-bold capitalize ${roleBadgeStyles[collab.role] ?? roleBadgeStyles.viewer}`}>
                     {collab.role}
                 </span>
-                <button
-                    className="opacity-0 group-hover:opacity-100 p-1 hover:bg-error/10 rounded-lg transition-all"
-                    title="Remove collaborator"
-                    onClick={() => handleRemoveCollaborator(collab.id)}
-                >
-                    <X size={14} className="text-error" />
-                </button>
+                {!isPending && collab.role !== 'owner' && (
+                    <button
+                        className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-error/10 rounded-lg transition-all active:scale-95"
+                        title="Remove collaborator"
+                        onClick={() => handleRemoveCollaborator(collab.id)}
+                    >
+                        <X size={13} className="text-error" />
+                    </button>
+                )}
             </div>
         </div>
     );
@@ -131,72 +125,85 @@ const CollabPanel = ({
         const userId = c.user?.id ?? c.id;
         const isOnline = presence.some((p) => p.userId === userId);
         const isEditing = !!cursors[userId];
-
         return { ...c, isOnline, isEditing };
     });
 
+    const onlineCount = activeWithPresence.filter(c => c.isOnline).length;
     const currentList = activeTab === 'active' ? activeWithPresence : pendingCollaborators;
     const isPending = activeTab === 'pending';
 
     return (
-        <aside className="w-80 flex-shrink-0 bg-surface-container flex flex-col border-l border-outline-variant/10">
+        <aside className="w-72 sm:w-80 h-full bg-surface-container-low flex flex-col border-l border-outline-variant/10">
 
             {/* ── Panel header ── */}
-            <div className="p-6 flex items-center justify-between border-b border-outline-variant/10">
-                <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                    Collaboration
-                </h3>
+            <div className="px-5 py-4 flex items-center justify-between border-b border-outline-variant/10 bg-surface-container/50">
+                <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Users size={14} className="text-primary" />
+                    </div>
+                    <div>
+                        <h3 className="text-xs font-bold uppercase tracking-widest text-slate-300">
+                            Collaboration
+                        </h3>
+                        <p className="text-[10px] text-slate-500">
+                            {onlineCount} online · {activeCollaborators.length} total
+                        </p>
+                    </div>
+                </div>
                 <button
                     onClick={onClose}
-                    className="p-1 hover:bg-surface-bright rounded-lg transition-colors"
+                    className="p-1.5 hover:bg-surface-bright rounded-lg transition-colors"
                 >
-                    <X size={16} className="text-slate-500" />
+                    <X size={15} className="text-slate-500" />
                 </button>
             </div>
 
             {/* ── Tabs ── */}
-            <div className="flex border-b border-outline-variant/10">
+            <div className="flex p-2 gap-1 border-b border-outline-variant/10 bg-surface-container/30">
                 {TABS.map(({ key, label, icon: Icon }) => (
                     <button
                         key={key}
                         onClick={() => setActiveTab(key)}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs font-bold uppercase tracking-wider transition-colors relative
-                            ${activeTab === key
-                                ? 'text-primary-container'
-                                : 'text-slate-500 hover:text-slate-300'
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold transition-all ${activeTab === key
+                            ? 'bg-surface-container-highest text-primary shadow-sm'
+                            : 'text-slate-500 hover:text-slate-300 hover:bg-surface-container-high/50'
                             }`}
                     >
-                        <Icon size={14} />
+                        <Icon size={13} />
                         {label}
                         {key === 'pending' && pendingCollaborators.length > 0 && (
-                            <span className="ml-1 w-4 h-4 flex items-center justify-center rounded-full bg-amber-500/20 text-amber-400 text-[9px] font-bold">
+                            <span className="w-4 h-4 flex items-center justify-center rounded-full bg-amber-500/20 text-amber-400 text-[9px] font-bold">
                                 {pendingCollaborators.length}
                             </span>
-                        )}
-                        {activeTab === key && (
-                            <span className="absolute bottom-0 left-1/4 right-1/4 h-0.5 bg-primary-container rounded-full" />
                         )}
                     </button>
                 ))}
             </div>
 
             {/* ── Collaborator list ── */}
-            <div className="flex-1 overflow-y-auto px-6 py-4">
+            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
                 {currentList.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-12 text-center">
-                        <p className="text-sm text-on-surface-variant">
-                            {isPending ? 'No pending invitations' : 'No active collaborators'}
-                        </p>
-                        <p className="text-xs text-slate-600 mt-1">
+                    <div className="flex flex-col items-center justify-center py-16 text-center px-4">
+                        <div className="w-12 h-12 rounded-2xl bg-surface-container-high flex items-center justify-center mb-3 border border-outline-variant/10">
                             {isPending
-                                ? 'Share this document to invite collaborators'
-                                : 'Collaborators will appear here when they join'}
+                                ? <Clock size={22} className="text-slate-500" />
+                                : <UserCheck size={22} className="text-slate-500" />
+                            }
+                        </div>
+                        <p className="text-sm font-semibold text-on-surface-variant mb-1">
+                            {isPending ? 'No pending invites' : 'No collaborators yet'}
+                        </p>
+                        <p className="text-xs text-slate-600 leading-relaxed">
+                            {isPending
+                                ? 'Share this document to invite people'
+                                : 'Active collaborators appear here when they join'}
                         </p>
                     </div>
                 ) : (
-                    <div className="space-y-4">
+                    <div className="space-y-2">
                         {currentList.map((collab) => (
                             <CollaboratorRow
+                                key={collab.id || collab.invitedEmail}
                                 collab={collab}
                                 isPending={isPending}
                                 document={document}
@@ -208,15 +215,15 @@ const CollabPanel = ({
             </div>
 
             {/* ── Comment input ── */}
-            <div className="p-4 border-t border-outline-variant/10">
-                <div className="flex items-center gap-2 bg-surface-container-highest rounded-xl p-1 border border-outline-variant/10">
+            <div className="p-3 border-t border-outline-variant/10 bg-surface-container/30">
+                <div className="flex items-center gap-2 bg-surface-container-highest/60 rounded-xl px-3 py-2 border border-outline-variant/10 focus-within:border-primary/30 focus-within:ring-1 focus-within:ring-primary/10 transition-all">
                     <input
                         type="text"
                         placeholder="Add a comment..."
-                        className="bg-transparent border-none focus:ring-0 text-xs text-on-surface flex-1 px-3 py-2 outline-none placeholder:text-outline/50"
+                        className="bg-transparent border-none focus:ring-0 text-xs text-on-surface flex-1 outline-none placeholder:text-slate-600"
                     />
-                    <button className="w-8 h-8 flex items-center justify-center bg-primary-container text-on-primary-container rounded-lg hover:brightness-110 transition-all">
-                        <span className="text-sm">↑</span>
+                    <button className="w-7 h-7 flex items-center justify-center bg-primary-container text-on-primary-container rounded-lg hover:brightness-110 transition-all active:scale-95 flex-shrink-0">
+                        <span className="text-xs font-bold">↑</span>
                     </button>
                 </div>
             </div>

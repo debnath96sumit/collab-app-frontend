@@ -177,11 +177,10 @@ const Dashboard = () => {
                 onTabChange={setActiveTab}
                 onNewDocument={() => setShowCreateModal(true)}
             >
-                <div className="max-w-7xl mx-auto px-8 pt-8 pb-20">
-                    {/* Greeting + tab toggle */}
-                    <div className="flex items-end justify-between mb-10">
+                <div className="max-w-7xl mx-auto px-4 sm:px-8 pt-6 sm:pt-8 pb-20">
+                    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 sm:mb-10">
                         <div>
-                            <h1 className="text-3xl font-headline font-bold text-on-surface mb-1">
+                            <h1 className="text-2xl sm:text-3xl font-headline font-bold text-on-surface mb-1">
                                 {getGreeting()}, {user?.fullName?.split(' ')[0] ?? user?.username}
                             </h1>
                             <p className="text-on-surface-variant text-sm">
@@ -192,10 +191,10 @@ const Dashboard = () => {
                         </div>
 
                         {/* Tab toggle */}
-                        <div className="flex items-center bg-surface-container-low rounded-xl p-1 gap-1">
+                        <div className="flex items-center bg-surface-container-low rounded-xl p-1 gap-1 self-start sm:self-auto">
                             <button
                                 onClick={() => setActiveTab('my')}
-                                className={`px-5 py-2 text-sm font-semibold rounded-lg transition-all ${activeTab === 'my'
+                                className={`px-3 sm:px-5 py-2 text-sm font-semibold rounded-lg transition-all ${activeTab === 'my'
                                     ? 'bg-primary-container text-on-primary-container shadow-lg'
                                     : 'text-on-surface-variant hover:text-on-surface'
                                     }`}
@@ -204,7 +203,7 @@ const Dashboard = () => {
                             </button>
                             <button
                                 onClick={() => setActiveTab('shared')}
-                                className={`px-5 py-2 text-sm font-semibold rounded-lg transition-all ${activeTab === 'shared'
+                                className={`px-3 sm:px-5 py-2 text-sm font-semibold rounded-lg transition-all ${activeTab === 'shared'
                                     ? 'bg-primary-container text-on-primary-container shadow-lg'
                                     : 'text-on-surface-variant hover:text-on-surface'
                                     }`}

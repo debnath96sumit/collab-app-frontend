@@ -180,12 +180,10 @@ const Editor = () => {
                 isOwner={isOwner}
             />
 
-            <div className="flex flex-1 overflow-hidden">
-
+            <div className="flex flex-1 overflow-hidden relative">
                 <main className="flex-1 bg-surface-dim flex flex-col items-center overflow-hidden relative">
                     <EditorToolbar />
-
-                    <div className="flex-1 w-full max-w-4xl px-12 overflow-y-auto relative custom-scrollbar">
+                    <div className="flex-1 w-full max-w-4xl px-4 sm:px-12 overflow-y-auto relative custom-scrollbar">
                         <EditorCanvas
                             content={document.content}
                             onChange={handleContentChange}
@@ -194,17 +192,33 @@ const Editor = () => {
                     </div>
                 </main>
 
-                <CollabPanel
-                    document={document}
-                    activeCollaborators={activeCollaborators}
-                    pendingCollaborators={pendingCollaborators}
-                    presence={onlineUsers}
-                    cursors={cursors}
-                    isOpen={isCollabPanelOpen}
-                    onClose={() => setIsCollabPanelOpen(false)}
-                    onRefresh={fetchCollaborators}
-                />
+                {/* Mobile backdrop */}
+                {isCollabPanelOpen && (
+                    <div
+                        className="fixed inset-0 bg-black/50 z-20 lg:hidden"
+                        onClick={() => setIsCollabPanelOpen(false)}
+                    />
+                )}
+
+                <div className={`
+                    fixed lg:static right-0 top-0 h-full z-30 lg:z-auto
+                    transform transition-transform duration-300 ease-in-out
+                    ${isCollabPanelOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
+                    ${!isCollabPanelOpen && 'lg:hidden'}
+                `}>
+                    <CollabPanel
+                        document={document}
+                        activeCollaborators={activeCollaborators}
+                        pendingCollaborators={pendingCollaborators}
+                        presence={onlineUsers}
+                        cursors={cursors}
+                        isOpen={isCollabPanelOpen}
+                        onClose={() => setIsCollabPanelOpen(false)}
+                        onRefresh={fetchCollaborators}
+                    />
+                </div>
             </div>
+
             {showShareModal && (
                 <ShareModal
                     document={document}

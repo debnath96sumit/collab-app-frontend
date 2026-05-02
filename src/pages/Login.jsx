@@ -39,7 +39,6 @@ const Login = () => {
     setLoading(true);
     try {
       const response = await login(parsed.data.email, parsed.data.password);
-      console.log('Login response', response);
       if (response.success) {
         if (redirect) {
           window.location.href = decodeURIComponent(redirect);
