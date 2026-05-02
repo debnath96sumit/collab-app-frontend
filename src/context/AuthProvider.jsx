@@ -18,9 +18,10 @@ export const AuthProvider = ({ children }) => {
     if (storedToken) {
       setToken(storedToken);
       if (storedRefreshToken) setRefreshTokenState(storedRefreshToken);
-      refreshUser();
+      refreshUser().finally(() => setLoading(false));
+    } else {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   const login = async (email, password) => {

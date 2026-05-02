@@ -18,24 +18,57 @@ const CollaboratorRow = ({ collab, isPending }) => {
     const user = collab?.user;
     const avatarUrl = user?.avatarUrl;
 
+    const statusLabel = collab.isEditing
+        ? 'Editing...'
+        : collab.isOnline
+            ? 'Online'
+            : 'Offline';
+
+    const statusColor = collab.isEditing
+        ? 'text-green-400'
+        : collab.isOnline
+            ? 'text-blue-400'
+            : 'text-slate-500';
+
     return (
         <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-                <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white overflow-hidden"
-                    style={{ backgroundColor: avatarUrl ? 'transparent' : (collab.color || '#6366f1') }}
-                >
-                    {avatarUrl ? (
-                        <img
-                            src={avatarUrl}
-                            alt={user?.username}
-                            className="w-full h-full object-cover"
+                {/* Avatar with online dot */}
+                <div className="relative flex-shrink-0">
+                    <div
+                        className="w-8 h-8 rounded-full flex items-center justify-center 
+                          text-[11px] font-bold text-white overflow-hidden"
+                        style={{
+                            backgroundColor: avatarUrl
+                                ? 'transparent'
+                                : (collab.color || '#6366f1')
+                        }}
+                    >
+                        {avatarUrl ? (
+                            <img
+                                src={avatarUrl}
+                                alt={user?.username}
+                                className="w-full h-full object-cover"
+                            />
+                        ) : (
+                            getInitials(user?.fullName || user?.username || collab?.invitedEmail)
+                        )}
+                    </div>
+
+                    {/* Online/editing dot — only for active collaborators */}
+                    {!isPending && (
+                        <span className={`absolute bottom-0 right-0 w-2 h-2 rounded-full 
+                          border border-surface-container ring-1 ring-surface-container
+                          ${collab.isEditing
+                                ? 'bg-green-400 animate-pulse'
+                                : collab.isOnline
+                                    ? 'bg-blue-400'
+                                    : 'bg-slate-600'
+                            }`}
                         />
-                    ) : (
-                        // getInitials(user?.fullName || user?.username)
-                        getInitials(user?.fullName || user?.username || collab?.invitedEmail)
                     )}
                 </div>
+
                 <div>
                     <p className="text-xs font-semibold text-on-surface">
                         {user?.username || collab?.invitedEmail}
@@ -43,30 +76,33 @@ const CollaboratorRow = ({ collab, isPending }) => {
                     {isPending ? (
                         <p className="text-[10px] text-amber-400">Invitation sent</p>
                     ) : (
-                        <p className="text-[10px] text-slate-500">
-                            {collab?.isActive ? 'Editing...' : 'Idle'}
+                        <p className={`text-[10px] ${statusColor}`}>
+                            {statusLabel}
                         </p>
                     )}
                 </div>
             </div>
 
-            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold capitalize ${roleBadgeStyles[collab.role] ?? roleBadgeStyles.viewer}`}>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold capitalize 
+              ${roleBadgeStyles[collab.role] ?? roleBadgeStyles.viewer}`}>
                 {collab.role}
             </span>
         </div>
     );
 };
 
-const CollabPanel = ({ activeCollaborators = [], pendingCollaborators = [], presence = [], isOpen, onClose }) => {
+const CollabPanel = ({ activeCollaborators = [], pendingCollaborators = [], presence = [], cursors = {}, isOpen, onClose }) => {
     const [activeTab, setActiveTab] = useState('active');
-    console.log('ppppppppp', pendingCollaborators);
 
     if (!isOpen) return null;
 
-    const activeWithPresence = activeCollaborators.map((c) => ({
-        ...c,
-        isActive: presence.some((p) => p.userId === c.id || p.userId === c.user?.id),
-    }));
+    const activeWithPresence = activeCollaborators.map((c) => {
+        const userId = c.user?.id ?? c.id;
+        const isOnline = presence.some((p) => p.userId === userId);
+        const isEditing = !!cursors[userId];
+
+        return { ...c, isOnline, isEditing };
+    });
 
     const currentList = activeTab === 'active' ? activeWithPresence : pendingCollaborators;
     const isPending = activeTab === 'pending';

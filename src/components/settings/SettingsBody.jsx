@@ -74,6 +74,7 @@ const SettingsBody = () => {
         }
         setAvatarFile(file);
         setAvatarPreview(URL.createObjectURL(file));
+        isProfileDirty = true;
     };
 
     const {

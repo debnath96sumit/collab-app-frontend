@@ -1,14 +1,12 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 const PublicRoute = ({ children }) => {
-    const token = localStorage.getItem('access_token');
+    const { isAuthenticated } = useAuth();
+    const location = useLocation();
 
-    // if (token) {
-    //     return <Navigate to="/dashboard" replace />;
-    // }
-
-    if (token) {
-        const searchParams = new URLSearchParams(window.location.search);
+    if (isAuthenticated) {
+        const searchParams = new URLSearchParams(location.search);
         const redirect = searchParams.get('redirect');
         return <Navigate to={redirect ? decodeURIComponent(redirect) : '/dashboard'} replace />;
     }

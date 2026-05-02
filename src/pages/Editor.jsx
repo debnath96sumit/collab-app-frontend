@@ -30,7 +30,8 @@ const Editor = () => {
     const [pendingCollaborators, setPendingCollaborators] = useState([]);
     const [onlineUsers, setOnlineUsers] = useState([]);
     const [cursors, setCursors] = useState({});
-
+    const typingStopTimer = useRef(null);
+    const isTypingRef = useRef(false);
     useEffect(() => {
         const token = localStorage.getItem('access_token');
         const socketInstance = io(`${import.meta.env.VITE_API_URL}/document-edits`, {
@@ -93,7 +94,22 @@ const Editor = () => {
             }));
         });
 
+        socketInstance.on('user-typing', (data) => {
+            setCursors(prev => {
+                if (!data.isTyping) {
+                    const next = { ...prev };
+                    delete next[data.userId];
+                    return next;
+                }
+                return { ...prev, [data.userId]: data };
+            });
+        });
+
         return () => {
+            if (isTypingRef.current) {
+                socketRef.current?.emit('typing-stop', { documentId: id });
+            }
+            if (typingStopTimer.current) clearTimeout(typingStopTimer.current);
             socketInstance.disconnect();
         };
     }, [id]);
@@ -111,6 +127,18 @@ const Editor = () => {
 
         setDocument(prev => ({ ...prev, content: newContent }));
         setSaveStatus('saving');
+
+        if (!isTypingRef.current) {
+            isTypingRef.current = true;
+            socketRef.current?.emit('typing-start', { documentId: document.id });
+        }
+
+        if (typingStopTimer.current) clearTimeout(typingStopTimer.current);
+
+        typingStopTimer.current = setTimeout(() => {
+            isTypingRef.current = false;
+            socketRef.current?.emit('typing-stop', { documentId: document.id });
+        }, 2000);
 
         debouncedEmit('editDocument', { docId: document.id, content: newContent });
     };
@@ -162,6 +190,7 @@ const Editor = () => {
                     activeCollaborators={activeCollaborators}
                     pendingCollaborators={pendingCollaborators}
                     presence={activeCollaborators}
+                    cursors={cursors}
                     isOpen={isCollabPanelOpen}
                     onClose={() => setIsCollabPanelOpen(false)}
                 />
