@@ -9,6 +9,11 @@ import { CollaboratorAPI, DocumentAPI } from '../utils/api';
 import io from 'socket.io-client';
 import ShareModal from '../components/ShareModal';
 import { debounce } from 'lodash';
+import { useEditor } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Underline from '@tiptap/extension-underline';
+import Link from '@tiptap/extension-link';
+import Placeholder from '@tiptap/extension-placeholder';
 
 const Editor = () => {
     const { user } = useAuth();
@@ -31,11 +36,42 @@ const Editor = () => {
     const [cursors, setCursors] = useState({});
     const typingStopTimer = useRef(null);
     const isTypingRef = useRef(false);
-    const [editorInstance, setEditorInstance] = useState(null);
 
-    const handleEditorReady = (editorInstance) => {
-        setEditorInstance(editorInstance);
-    };
+    const editor = useEditor({
+        extensions: [
+            StarterKit.configure(),
+            Underline.configure(),
+            Link.configure({
+                openOnClick: false,
+            }),
+            Placeholder.configure({
+                placeholder: 'Start typing your document here...',
+            }),
+        ],
+        content: document.content || '',
+        onUpdate({ editor }) {
+            handleContentChange(editor.getHTML());
+        },
+        onSelectionUpdate({ editor }) {
+            const pos = editor.state.selection.anchor;
+            handleCursorMove(pos);
+        },
+    });
+
+    useEffect(() => {
+        if (!editor || editor.isDestroyed || !document.content) return;
+
+        const currentHtml = editor.getHTML();
+        if (document.content !== currentHtml) {
+            const { from, to } = editor.state.selection;
+            editor.commands.setContent(document.content, false);
+
+            const docSize = editor.state.doc.content.size;
+            if (from <= docSize && to <= docSize) {
+                editor.commands.setTextSelection({ from, to });
+            }
+        }
+    }, [editor, document.content]);
 
     const fetchCollaborators = useCallback(async () => {
         try {
@@ -125,7 +161,7 @@ const Editor = () => {
             if (typingStopTimer.current) clearTimeout(typingStopTimer.current);
             socketInstance.disconnect();
         };
-    }, [id]);
+    }, [id, editor]);
 
     const debouncedEmit = useCallback(
         debounce((event, payload) => {
@@ -186,13 +222,10 @@ const Editor = () => {
 
             <div className="flex flex-1 overflow-hidden relative">
                 <main className="flex-1 bg-surface-dim flex flex-col items-center overflow-hidden relative">
-                    <EditorToolbar editor={editorInstance} />
+                    <EditorToolbar editor={editor} />
                     <div className="flex-1 w-full max-w-4xl px-4 sm:px-12 overflow-y-auto relative custom-scrollbar">
                         <EditorCanvas
-                            content={document.content}
-                            onChange={handleContentChange}
-                            onCursorMove={handleCursorMove}
-                            onEditorReady={handleEditorReady}
+                            editor={editor}
                         />
                     </div>
                 </main>
@@ -229,6 +262,7 @@ const Editor = () => {
                     document={document}
                     activeCollaborators={activeCollaborators}
                     onClose={() => setShowShareModal(false)}
+                    loggedInUser={user}
                 />
             )}
         </div>

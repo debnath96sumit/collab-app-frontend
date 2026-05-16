@@ -37,7 +37,7 @@ const EditorHeader = ({
                         onChange={(e) => onTitleChange(e.target.value)}
                         readOnly={!isOwner}
                         placeholder="Untitled Document"
-                        className={`bg-transparent border-none focus:ring-0 text-slate-200 font-semibold text-sm sm:text-base p-1 w-28 sm:w-48 md:w-64 outline-none rounded-lg transition-colors placeholder:text-slate-600 truncate ${isOwner ? 'focus:bg-slate-800/40 cursor-text' : 'cursor-default'
+                        className={`bg-transparent border-none focus:ring-0 text-slate-200 font-semibold text-sm sm:text-base p-1 w-28 sm:w-48 md:w-64 outline-none rounded-lg transition-colors placeholder:text-slate-600 truncate ${isOwner ? 'focus:bg-slate-800/40 cursor-text' : 'cursor-not-allowed'
                             }`}
                     />
                 </div>

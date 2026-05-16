@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { X, Link, Copy, ChevronDown, Check } from 'lucide-react';
 import { CollaboratorAPI, DocumentAPI } from '../utils/api';
 import ModalWrapper from '../components/dashboard/modals/ModalWrapper';
+import ConfirmRemoveMember from '../components/dashboard/modals/ConfirmRemoveMember';
 import { pushToast } from '../utils/toaster';
 
 const roleBadgeStyles = {
@@ -14,7 +15,7 @@ const roleBadgeStyles = {
 
 const roleOptions = ['editor', 'commenter', 'viewer'];
 
-const ShareModal = ({ document, onClose, activeCollaborators }) => {
+const ShareModal = ({ document, onClose, activeCollaborators, loggedInUser }) => {
     // ── Invite section state ─────────────────────────────────────────────────
     const [inviteEmail, setInviteEmail] = useState('');
     const [inviteRole, setInviteRole] = useState('editor');
@@ -28,6 +29,8 @@ const ShareModal = ({ document, onClose, activeCollaborators }) => {
     const [collaborators, setCollaborators] = useState(
         activeCollaborators ?? [],
     );
+    const [collabToRemove, setCollabToRemove] = useState(null);
+    const [removeLoading, setRemoveLoading] = useState(false);
     const handleInvite = async () => {
         if (!inviteEmail.trim()) return;
         setInviteLoading(true);
@@ -111,13 +114,18 @@ const ShareModal = ({ document, onClose, activeCollaborators }) => {
             setCollaborators(previousCollaborators);
         }
     };
-    const handleRemoveCollaborator = async (collabId) => {
+    const handleRemoveCollaborator = async () => {
+        if (!collabToRemove) return;
+        setRemoveLoading(true);
         try {
-            const response = await CollaboratorAPI.removeCollaborator(document.id, collabId);
-            setCollaborators((prev) => prev.filter((c) => c.id !== collabId));
-            pushToast({ message: response.message, type: 'success' });
+            await CollaboratorAPI.removeCollaborator(document.id, collabToRemove.id);
+            setCollaborators((prev) => prev.filter((c) => c.id !== collabToRemove.id));
+            pushToast({ message: 'Collaborator removed successfully', type: 'success' });
+            setCollabToRemove(null);
         } catch (error) {
             console.log(error);
+        } finally {
+            setRemoveLoading(false);
         }
     };
 
@@ -188,22 +196,12 @@ const ShareModal = ({ document, onClose, activeCollaborators }) => {
 
                 </section>
 
-                {/* ── Section 2: People with access ── */}
                 <section>
                     <h3 className="text-sm font-medium text-on-surface-variant mb-4">
                         People with access
                     </h3>
 
                     <div className="space-y-1">
-                        {/*
-             * TODO: map over collaborators array
-             * Each item shows avatar (initials), username, email, role badge
-             * Owner row has no remove button
-             * Other rows show a remove button on hover
-             *
-             * Pending collaborators show 'pending' badge in amber
-             * Active collaborators show their role badge
-             */}
                         {collaborators.length === 0 ? (
                             <p className="text-sm text-on-surface-variant text-center py-4">
                                 No collaborators yet
@@ -233,10 +231,18 @@ const ShareModal = ({ document, onClose, activeCollaborators }) => {
                                                 )}
                                             </div>
                                             <div className="min-w-0">
-                                                <p className="text-sm font-semibold text-on-surface truncate">
-                                                    {username}
-                                                </p>
-                                                <p className="text-xs text-on-surface-variant truncate">{email}</p>
+                                                {collab.user?.id === loggedInUser?.id ? (
+                                                    <p className="text-sm font-semibold text-on-surface truncate">
+                                                        You
+                                                    </p>
+                                                ) : (
+                                                    <p className="text-sm font-semibold text-on-surface truncate">
+                                                        {username}
+                                                    </p>
+                                                )}
+                                                {collab.user?.id !== loggedInUser?.id && (
+                                                    <p className="text-xs text-on-surface-variant truncate">{email}</p>
+                                                )}
                                             </div>
                                         </div>
 
@@ -263,7 +269,7 @@ const ShareModal = ({ document, onClose, activeCollaborators }) => {
                                                         {collab.role}
                                                     </span>
                                                     <button
-                                                        onClick={() => handleRemoveCollaborator(collab.id)}
+                                                        onClick={() => setCollabToRemove(collab)}
                                                         className="opacity-0 group-hover:opacity-100 p-1 hover:bg-error/10 rounded-lg transition-all"
                                                         title="Remove collaborator"
                                                     >
@@ -364,6 +370,14 @@ const ShareModal = ({ document, onClose, activeCollaborators }) => {
                     {copied ? 'Copied!' : 'Copy Link'}
                 </button>
             </div>
+            {collabToRemove && (
+                <ConfirmRemoveMember
+                    member={collabToRemove}
+                    onClose={() => setCollabToRemove(null)}
+                    onConfirm={handleRemoveCollaborator}
+                    loading={removeLoading}
+                />
+            )}
         </ModalWrapper>
     );
 };
