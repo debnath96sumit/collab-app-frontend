@@ -16,7 +16,7 @@ const TABS = [
     { key: 'pending', label: 'Pending', icon: Clock },
 ];
 
-const CollaboratorRow = ({ collab, isPending, document, onRefresh }) => {
+const CollaboratorRow = ({ collab, isPending, document, onRefresh, loggedInUser }) => {
     const user = collab?.user;
     const avatarUrl = user?.avatarUrl;
 
@@ -78,7 +78,7 @@ const CollaboratorRow = ({ collab, isPending, document, onRefresh }) => {
 
                 <div className="min-w-0">
                     <p className="text-xs font-semibold text-on-surface truncate">
-                        {user?.username || collab?.invitedEmail}
+                        {user?.id === loggedInUser?.id ? 'You' : user?.username || collab?.invitedEmail}
                     </p>
                     {isPending ? (
                         <p className="text-[10px] text-amber-400">Invitation sent</p>
@@ -115,7 +115,8 @@ const CollabPanel = ({
     cursors = {},
     isOpen,
     onClose,
-    onRefresh
+    onRefresh,
+    loggedInUser
 }) => {
     const [activeTab, setActiveTab] = useState('active');
 
@@ -208,6 +209,7 @@ const CollabPanel = ({
                                 isPending={isPending}
                                 document={document}
                                 onRefresh={onRefresh}
+                                loggedInUser={loggedInUser}
                             />
                         ))}
                     </div>

@@ -1,6 +1,8 @@
 import {
-    Bold, Italic, Underline as UnderlineIcon, Heading1, Heading2,
+    Bold, Italic, Underline as UnderlineIcon, Strikethrough as StrikethroughIcon, Heading1, Heading2,
     List, ListOrdered, Link as LinkIcon, Undo, Redo,
+    Heading3,
+    Code,
 } from 'lucide-react';
 
 const ToolbarButton = ({ onClick, active, disabled, icon: Icon, label }) => (
@@ -76,6 +78,23 @@ const EditorToolbar = ({ editor }) => {
                     active={editor.isActive('underline')}
                     onClick={() => editor.chain().focus().toggleUnderline().run()}
                 />
+                <ToolbarButton
+                    icon={StrikethroughIcon}
+                    label="Strikethrough"
+                    active={editor.isActive('strike')}
+                    onClick={() => editor.chain().focus().toggleStrike().run()}
+                />
+            </div>
+
+            <Divider />
+
+            <div className="flex items-center px-1">
+                <ToolbarButton
+                    icon={Code}
+                    label="Code"
+                    active={editor.isActive('code')}
+                    onClick={() => editor.chain().focus().toggleCode().run()}
+                />
             </div>
 
             <Divider />
@@ -93,6 +112,12 @@ const EditorToolbar = ({ editor }) => {
                     label="Heading 2"
                     active={editor.isActive('heading', { level: 2 })}
                     onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+                />
+                <ToolbarButton
+                    icon={Heading3}
+                    label="Heading 3"
+                    active={editor.isActive('heading', { level: 3 })}
+                    onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
                 />
             </div>
 

@@ -2,6 +2,7 @@ import { ArrowLeft, Share2, Bell, Settings, Users } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import PresenceAvatars from './PresenceAvatars';
 import SaveStatus from './SaveStatus';
+import { getInitials } from '../../helpers';
 
 const EditorHeader = ({
     title,
@@ -12,6 +13,8 @@ const EditorHeader = ({
     onShare,
     onToggleCollabPanel,
     isOwner,
+    canEdit,
+    user,
 }) => {
     const navigate = useNavigate();
 
@@ -35,9 +38,9 @@ const EditorHeader = ({
                         type="text"
                         value={title || ''}
                         onChange={(e) => onTitleChange(e.target.value)}
-                        readOnly={!isOwner}
+                        readOnly={!canEdit}
                         placeholder="Untitled Document"
-                        className={`bg-transparent border-none focus:ring-0 text-slate-200 font-semibold text-sm sm:text-base p-1 w-28 sm:w-48 md:w-64 outline-none rounded-lg transition-colors placeholder:text-slate-600 truncate ${isOwner ? 'focus:bg-slate-800/40 cursor-text' : 'cursor-not-allowed'
+                        className={`bg-transparent border-none focus:ring-0 text-slate-200 font-semibold text-sm sm:text-base p-1 w-28 sm:w-48 md:w-64 outline-none rounded-lg transition-colors placeholder:text-slate-600 truncate ${canEdit ? 'focus:bg-slate-800/40 cursor-text' : 'cursor-not-allowed'
                             }`}
                     />
                 </div>
@@ -45,17 +48,10 @@ const EditorHeader = ({
 
             <div className="hidden sm:flex items-center justify-center gap-3 flex-shrink-0 px-4">
                 <PresenceAvatars presence={presence} />
-                <SaveStatus status={saveStatus} />
+                {canEdit && <SaveStatus status={saveStatus} />}
             </div>
 
             <div className="flex items-center justify-end gap-1 sm:gap-2 flex-shrink-0">
-                <div className="flex items-center gap-1.5 mr-1 sm:mr-2">
-                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isConnected ? 'bg-green-400' : 'bg-red-400'}`} />
-                    <span className="text-xs text-on-surface-variant hidden md:block">
-                        {isConnected ? 'Connected' : 'Disconnected'}
-                    </span>
-                </div>
-
                 {isOwner && (
                     <button
                         onClick={onShare}
@@ -74,9 +70,22 @@ const EditorHeader = ({
                     <Users size={16} />
                 </button>
 
-                <button className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 rounded-lg transition-colors active:scale-95 hidden sm:flex">
-                    <Bell size={16} />
-                </button>
+                <div className="relative flex-shrink-0">
+                    <button
+                        className="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container text-xs font-bold border border-outline-variant/30 hover:ring-2 ring-primary/30 transition-all"
+                    >
+                        {user?.avatarUrl ? (
+                            <img src={user?.avatarUrl} alt="Avatar" className="w-full h-full object-cover rounded-full" />
+                        ) : (
+                            getInitials(user?.fullName)
+                        )}
+                    </button>
+                    {!isConnected ? (
+                        <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-surface-container bg-red-400`} />
+                    ) : (
+                        <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-surface-container bg-green-400" />
+                    )}
+                </div>
             </div>
         </header>
     );

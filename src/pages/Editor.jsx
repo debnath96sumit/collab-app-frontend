@@ -53,6 +53,7 @@ const Editor = () => {
             handleContentChange(editor.getHTML());
         },
         onSelectionUpdate({ editor }) {
+            if (!canEdit) return;
             const pos = editor.state.selection.anchor;
             handleCursorMove(pos);
         },
@@ -172,6 +173,7 @@ const Editor = () => {
     );
 
     const handleContentChange = (htmlContent) => {
+        if (!canEdit) return;
         setDocument(prev => ({ ...prev, content: htmlContent }));
         setSaveStatus('saving');
 
@@ -191,7 +193,7 @@ const Editor = () => {
     };
 
     const handleTitleChange = (newTitle) => {
-        if (newTitle.length > 50 || newTitle.length < 1) {
+        if (!canEdit || newTitle.length > 50 || newTitle.length < 1) {
             return;
         }
         setDocument(prev => ({ ...prev, title: newTitle }));
@@ -206,6 +208,16 @@ const Editor = () => {
     };
 
     const isOwner = user?.id === document?.owner_id;
+    const isEditor = activeCollaborators.some(
+        (collab) => collab.user?.id === user?.id && collab.role === 'editor'
+    );
+    const canEdit = isOwner || isEditor;
+
+    useEffect(() => {
+        if (editor && !editor.isDestroyed) {
+            editor.setEditable(canEdit);
+        }
+    }, [editor, canEdit]);
 
     return (
         <div className="bg-background text-on-surface h-screen w-screen overflow-hidden flex flex-col">
@@ -218,14 +230,18 @@ const Editor = () => {
                 onShare={() => setShowShareModal(true)}
                 onToggleCollabPanel={() => setIsCollabPanelOpen(prev => !prev)}
                 isOwner={isOwner}
+                canEdit={canEdit}
+                user={user}
             />
 
             <div className="flex flex-1 overflow-hidden relative">
                 <main className="flex-1 bg-surface-dim flex flex-col items-center overflow-hidden relative">
-                    <EditorToolbar editor={editor} />
+                    {canEdit && <EditorToolbar editor={editor} />}
                     <div className="flex-1 w-full max-w-4xl px-4 sm:px-12 overflow-y-auto relative custom-scrollbar">
                         <EditorCanvas
                             editor={editor}
+                            cursors={cursors}
+                            onlineUsers={onlineUsers}
                         />
                     </div>
                 </main>
@@ -253,6 +269,7 @@ const Editor = () => {
                         isOpen={isCollabPanelOpen}
                         onClose={() => setIsCollabPanelOpen(false)}
                         onRefresh={fetchCollaborators}
+                        loggedInUser={user}
                     />
                 </div>
             </div>
