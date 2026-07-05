@@ -5,12 +5,14 @@ import { useState } from 'react';
 import { FileText, LogOut, User } from 'lucide-react';
 import { getInitials } from '../../../helpers';
 import SettingsModal from '../../settings/SettingsModal';
+import NotificationModal from '../../notification/NotificationModal';
 
 const DashboardHeader = ({ searchQuery, onSearchChange, onMenuClick }) => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
+    const [showNotifications, setShowNotifications] = useState(false);
     const [searchExpanded, setSearchExpanded] = useState(false);
 
     const handleLogout = async () => {
@@ -84,9 +86,63 @@ const DashboardHeader = ({ searchQuery, onSearchChange, onMenuClick }) => {
                         <Search size={18} />
                     </button>
 
-                    <button className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 transition-colors rounded-lg active:scale-95">
-                        <Bell size={18} />
-                    </button>
+                    <div className="relative">
+                        <button
+                            onClick={() => setShowNotifications(prev => !prev)}
+                            className={`
+                                relative p-2 rounded-lg transition-all duration-200 active:scale-95
+                                ${showNotifications
+                                    ? "bg-primary/15 text-primary"
+                                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/80"
+                                }
+                            `}
+                        >
+                            <Bell size={18} />
+                            {/* <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary border border-slate-900" /> */}
+                        </button>
+
+                        {showNotifications && (
+                            <>
+                                {/* Click outside */}
+                                <div
+                                    className="fixed inset-0 z-40"
+                                    onClick={() => setShowNotifications(false)}
+                                />
+
+                                <div className="
+                                    fixed
+                                    top-16
+                                    left-2
+                                    right-2
+                                    z-50
+                                    max-h-[calc(100vh-5rem)]
+                                    bg-surface-dim
+                                    rounded-2xl
+                                    border
+                                    border-outline-variant/15
+                                    shadow-2xl
+                                    shadow-black/40
+                                    overflow-hidden
+                                    animate-in
+                                    fade-in
+                                    zoom-in-95
+                                    duration-200
+
+                                    sm:absolute
+                                    sm:top-12
+                                    sm:right-0
+                                    sm:left-auto
+                                    sm:w-96
+
+                                    md:w-[420px]
+                                ">
+                                    <NotificationModal
+                                        onClose={() => setShowNotifications(false)}
+                                    />
+                                </div>
+                            </>
+                        )}
+                    </div>
                     <button
                         onClick={() => setShowSettings(true)}
                         className="p-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 transition-colors rounded-lg active:scale-95"
