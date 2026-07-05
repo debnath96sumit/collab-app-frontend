@@ -99,6 +99,7 @@ const Login = () => {
                 <input
                   type="email"
                   name="email"
+                  autoComplete='email'
                   value={loginData.email}
                   onChange={handleLoginInputChange}
                   placeholder="name@company.com"
@@ -131,6 +132,7 @@ const Login = () => {
                   type={showPassword ? 'text' : 'password'}
                   name="password"
                   value={loginData.password}
+                  autoComplete='password'
                   onChange={handleLoginInputChange}
                   placeholder="••••••••"
                   className="block w-full pl-10 pr-12 py-3 bg-surface-container-highest/30 border border-outline-variant/20 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary text-on-surface placeholder:text-outline/50 transition-all outline-none text-sm"

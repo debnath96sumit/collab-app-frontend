@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Clock, UserCheck, Users } from 'lucide-react';
+import { X, Clock, UserCheck, Users, LogOut } from 'lucide-react';
 import { getInitials } from '../../helpers';
 import { CollaboratorAPI } from '../../utils/api';
 import { pushToast } from '../../utils/toaster';
@@ -19,6 +19,8 @@ const TABS = [
 const CollaboratorRow = ({ collab, isPending, document, onRefresh, loggedInUser }) => {
     const user = collab?.user;
     const avatarUrl = user?.avatarUrl;
+    const isOwner = loggedInUser?.id === document?.owner_id;
+    const isSelf = user?.id === loggedInUser?.id;
 
     const statusLabel = collab.isEditing
         ? 'Editing...'
@@ -93,13 +95,22 @@ const CollaboratorRow = ({ collab, isPending, document, onRefresh, loggedInUser 
                 <span className={`text-[10px] px-2 py-1 rounded-lg font-bold capitalize ${roleBadgeStyles[collab.role] ?? roleBadgeStyles.viewer}`}>
                     {collab.role}
                 </span>
-                {!isPending && collab.role !== 'owner' && (
+                {!isPending && collab.role !== 'owner' && isOwner && !isSelf && (
                     <button
                         className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-error/10 rounded-lg transition-all active:scale-95"
-                        title="Remove collaborator"
+                        title='Remove Collaborator'
                         onClick={() => handleRemoveCollaborator(collab.id)}
                     >
                         <X size={13} className="text-error" />
+                    </button>
+                )}
+                {!isPending && !isOwner && isSelf && (
+                    <button
+                        className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-error/10 rounded-lg transition-all active:scale-95"
+                        title='Leave'
+                        onClick={() => handleRemoveCollaborator(collab.id)}
+                    >
+                        <LogOut size={13} className="text-error" />
                     </button>
                 )}
             </div>
@@ -119,6 +130,7 @@ const CollabPanel = ({
     loggedInUser
 }) => {
     const [activeTab, setActiveTab] = useState('active');
+    const isOwner = loggedInUser?.id === document?.owner_id;
 
     if (!isOpen) return null;
 
@@ -130,6 +142,7 @@ const CollabPanel = ({
     });
 
     const onlineCount = activeWithPresence.filter(c => c.isOnline).length;
+    const visibleTabs = isOwner ? TABS : TABS.filter(t => t.key === 'active');
     const currentList = activeTab === 'active' ? activeWithPresence : pendingCollaborators;
     const isPending = activeTab === 'pending';
 
@@ -159,27 +172,28 @@ const CollabPanel = ({
                 </button>
             </div>
 
-            {/* ── Tabs ── */}
-            <div className="flex p-2 gap-1 border-b border-outline-variant/10 bg-surface-container/30">
-                {TABS.map(({ key, label, icon: Icon }) => (
-                    <button
-                        key={key}
-                        onClick={() => setActiveTab(key)}
-                        className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold transition-all ${activeTab === key
-                            ? 'bg-surface-container-highest text-primary shadow-sm'
-                            : 'text-slate-500 hover:text-slate-300 hover:bg-surface-container-high/50'
-                            }`}
-                    >
-                        <Icon size={13} />
-                        {label}
-                        {key === 'pending' && pendingCollaborators.length > 0 && (
-                            <span className="w-4 h-4 flex items-center justify-center rounded-full bg-amber-500/20 text-amber-400 text-[9px] font-bold">
-                                {pendingCollaborators.length}
-                            </span>
-                        )}
-                    </button>
-                ))}
-            </div>
+            {isOwner && (
+                <div className="flex p-2 gap-1 border-b border-outline-variant/10 bg-surface-container/30">
+                    {visibleTabs.map(({ key, label, icon: Icon }) => (
+                        <button
+                            key={key}
+                            onClick={() => setActiveTab(key)}
+                            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold transition-all ${activeTab === key
+                                ? 'bg-surface-container-highest text-primary shadow-sm'
+                                : 'text-slate-500 hover:text-slate-300 hover:bg-surface-container-high/50'
+                                }`}
+                        >
+                            <Icon size={13} />
+                            {label}
+                            {key === 'pending' && pendingCollaborators.length > 0 && (
+                                <span className="w-4 h-4 flex items-center justify-center rounded-full bg-amber-500/20 text-amber-400 text-[9px] font-bold">
+                                    {pendingCollaborators.length}
+                                </span>
+                            )}
+                        </button>
+                    ))}
+                </div>
+            )}
 
             {/* ── Collaborator list ── */}
             <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">

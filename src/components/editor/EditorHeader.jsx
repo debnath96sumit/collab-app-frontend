@@ -55,7 +55,7 @@ const EditorHeader = ({
                 {isOwner && (
                     <button
                         onClick={onShare}
-                        className="bg-primary-container text-on-primary-container px-3 sm:px-5 py-2 rounded-lg font-bold text-sm hover:bg-blue-600 transition-colors active:scale-95 flex items-center gap-1.5"
+                        className="bg-primary-container text-on-primary-container px-3 sm:px-5 py-2 rounded-lg font-bold text-sm hover:bg-blue-600 transition-colors active:scale-95 flex items-center gap-1.5 cursor-pointer"
                     >
                         <Share2 size={15} />
                         <span className="hidden sm:block">Share</span>

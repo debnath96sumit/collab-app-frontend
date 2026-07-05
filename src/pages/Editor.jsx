@@ -102,7 +102,9 @@ const Editor = () => {
                 const response = await DocumentAPI.getDocument(id);
                 if (response.data) {
                     setDocument(response.data);
-                    await fetchCollaborators();
+                    if (response.data.linkAccess !== 'public') {
+                        await fetchCollaborators();
+                    }
                 }
 
                 socketInstance.emit('joinDocument', id);
