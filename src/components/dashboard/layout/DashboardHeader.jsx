@@ -6,9 +6,11 @@ import { FileText, LogOut, User } from 'lucide-react';
 import { getInitials } from '../../../helpers';
 import SettingsModal from '../../settings/SettingsModal';
 import NotificationModal from '../../notification/NotificationModal';
+import { useNotifications } from '../../../context/NotificationContext';
 
 const DashboardHeader = ({ searchQuery, onSearchChange, onMenuClick }) => {
     const { user, logout } = useAuth();
+    const { unreadCount } = useNotifications();
     const navigate = useNavigate();
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
@@ -98,7 +100,9 @@ const DashboardHeader = ({ searchQuery, onSearchChange, onMenuClick }) => {
                             `}
                         >
                             <Bell size={18} />
-                            {/* <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary border border-slate-900" /> */}
+                            {unreadCount > 0 && (
+                                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary border border-slate-900" />
+                            )}
                         </button>
 
                         {showNotifications && (

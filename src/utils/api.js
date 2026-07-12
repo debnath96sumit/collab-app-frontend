@@ -61,3 +61,16 @@ export const CollaboratorAPI = {
 
   acceptInvitation: async (token) => await axiosInstance.post(`/v1/documents/collaborators/accept/${token}`),
 }
+
+export const NotificationAPI = {
+  getNotifications: async (cursor) =>
+    axiosInstance.get('/v1/notifications', { params: cursor ? { cursor } : {} }),
+
+  getUnreadCount: async () => axiosInstance.get('/v1/notifications/unread-count'),
+
+  markRead: async (id) => axiosInstance.patch(`/v1/notifications/${id}/read`),
+
+  markAllRead: async () => axiosInstance.patch('/v1/notifications/mark-all-read'),
+
+  remove: async (id) => axiosInstance.delete(`/v1/notifications/${id}`),
+};

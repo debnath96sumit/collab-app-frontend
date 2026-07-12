@@ -13,52 +13,55 @@ import Editor from './pages/Editor.jsx'
 import NotFound from './pages/NotFound.jsx'
 import InvitationAccept from './pages/invitation/accept.jsx'
 import SharedDocument from './pages/SharedDocument.jsx';
+import { NotificationProvider } from './context/NotificationProvider.jsx';
 
 function App() {
   return (
     <Router>
       <AuthProvider>
-        <Toaster />
-        <Routes>
-          <Route
-            path="/"
-            element={<PublicRoute><Home /></PublicRoute>}
-          />
-          <Route
-            path="/login"
-            element={<PublicRoute><Login /></PublicRoute>}
-          />
+        <NotificationProvider>
+          <Toaster />
+          <Routes>
+            <Route
+              path="/"
+              element={<PublicRoute><Home /></PublicRoute>}
+            />
+            <Route
+              path="/login"
+              element={<PublicRoute><Login /></PublicRoute>}
+            />
 
-          <Route
-            path="/register"
-            element={<PublicRoute><Register /></PublicRoute>}
-          />
+            <Route
+              path="/register"
+              element={<PublicRoute><Register /></PublicRoute>}
+            />
 
-          <Route path="/document/shared/:shareToken" element={<SharedDocument />} />
-          <Route
-            path="/invitation/accept"
-            element={<InvitationAccept />}
-          />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/board/:id"
-            element={
-              <ProtectedRoute>
-                <Editor />
-              </ProtectedRoute>
-            }
-          />
+            <Route path="/document/shared/:shareToken" element={<SharedDocument />} />
+            <Route
+              path="/invitation/accept"
+              element={<InvitationAccept />}
+            />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/board/:id"
+              element={
+                <ProtectedRoute>
+                  <Editor />
+                </ProtectedRoute>
+              }
+            />
 
 
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </NotificationProvider>
       </AuthProvider>
     </Router>
   )
