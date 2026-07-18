@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { CollaboratorAPI } from '../../utils/api';
 import Loading from '../../components/Loading';
+import { pushToast } from '../../utils/toaster';
 
 const InvitationAccept = () => {
     const [inviteDetails, setInviteDetails] = useState(null);
